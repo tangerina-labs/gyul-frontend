@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/vue3'
-import { ref } from 'vue'
 import NodeTypeMenu from './NodeTypeMenu.vue'
 
 const meta: Meta<typeof NodeTypeMenu> = {
