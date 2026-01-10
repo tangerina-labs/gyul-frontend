@@ -50,7 +50,8 @@ test.describe('Branch Highlight', () => {
     await expect(highlightedEdges).toHaveCount(2)
 
     const edgePath = highlightedEdges.first().locator('.vue-flow__edge-path')
-    await expect(edgePath).toHaveCSS('stroke', 'rgb(79, 70, 229)')
+    // Brand color: teal-500 (#14b8a6 = rgb(20, 184, 166))
+    await expect(edgePath).toHaveCSS('stroke', 'rgb(20, 184, 166)')
 
     const fadedEdges = page.locator('.vue-flow__edge.edge-faded')
     await expect(fadedEdges).toHaveCount(1)

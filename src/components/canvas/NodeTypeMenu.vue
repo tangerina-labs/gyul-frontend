@@ -52,6 +52,13 @@ const options: Array<{ type: NodeType; label: string; icon: string; description:
   }
 ]
 
+// Icon colors by type
+const iconColors: Record<NodeType, string> = {
+  tweet: 'text-accent-tweet',
+  question: 'text-accent-question',
+  note: 'text-accent-note'
+}
+
 // Handlers
 const handleSelect = (type: NodeType) => {
   emit('select', type)
@@ -94,24 +101,29 @@ onUnmounted(() => {
 <template>
   <div
     ref="menuRef"
-    class="node-type-menu"
+    class="fixed z-menu min-w-[240px] bg-white border border-gray-200 rounded-lg shadow-menu overflow-hidden animate-fade-in"
     :style="{ left: `${props.x}px`, top: `${props.y}px` }"
     role="menu"
     data-testid="node-type-menu"
   >
-    <div class="node-type-menu__header">Adicionar no</div>
+    <div class="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 border-b border-gray-200">
+      Adicionar no
+    </div>
 
     <button
       v-for="option in options"
       :key="option.type"
       type="button"
-      class="node-type-menu__option"
-      :class="`node-type-menu__option--${option.type}`"
+      class="flex items-center gap-4 w-full p-4 bg-transparent border-none text-left cursor-pointer transition-colors duration-fast hover:bg-gray-100 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-gray-200"
       role="menuitem"
       :data-testid="`menu-option-${option.type}`"
       @click="handleSelect(option.type)"
     >
-      <svg class="node-type-menu__icon" viewBox="0 0 24 24" fill="none">
+      <svg 
+        :class="['w-6 h-6 flex-shrink-0', iconColors[option.type]]" 
+        viewBox="0 0 24 24" 
+        fill="none"
+      >
         <path
           :d="option.icon"
           :fill="option.type === 'tweet' ? 'currentColor' : 'none'"
@@ -122,109 +134,14 @@ onUnmounted(() => {
         />
       </svg>
 
-      <div class="node-type-menu__text">
-        <span class="node-type-menu__label" :data-testid="`menu-label-${option.type}`">{{
-          option.label
-        }}</span>
-        <span
-          class="node-type-menu__description"
-          :data-testid="`menu-description-${option.type}`"
-          >{{ option.description }}</span
-        >
+      <div class="flex flex-col gap-0.5">
+        <span class="font-medium text-gray-900" :data-testid="`menu-label-${option.type}`">
+          {{ option.label }}
+        </span>
+        <span class="text-sm text-gray-600" :data-testid="`menu-description-${option.type}`">
+          {{ option.description }}
+        </span>
       </div>
     </button>
   </div>
 </template>
-
-<style scoped>
-/* =============================================================================
-   NODE TYPE MENU - Quiet UI
-   ============================================================================= */
-
-.node-type-menu {
-  position: fixed;
-  z-index: var(--z-menu);
-  min-width: 240px;
-  background: var(--surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
-  animation: menuFadeIn var(--transition-fast);
-}
-
-.node-type-menu__header {
-  padding: var(--space-2) var(--space-4);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-secondary);
-  background: var(--surface-muted);
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.node-type-menu__option {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  width: 100%;
-  padding: var(--space-4);
-  background: none;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
-
-.node-type-menu__option:hover {
-  background: var(--surface-muted);
-}
-
-.node-type-menu__option:not(:last-child) {
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.node-type-menu__icon {
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-}
-
-.node-type-menu__option--tweet .node-type-menu__icon {
-  color: var(--accent-tweet);
-}
-
-.node-type-menu__option--question .node-type-menu__icon {
-  color: var(--accent-question);
-}
-
-.node-type-menu__option--note .node-type-menu__icon {
-  color: var(--accent-note);
-}
-
-.node-type-menu__text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.node-type-menu__label {
-  font-weight: var(--font-weight-medium);
-  color: var(--text-primary);
-}
-
-.node-type-menu__description {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-}
-
-@keyframes menuFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-</style>

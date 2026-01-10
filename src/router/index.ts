@@ -1,17 +1,23 @@
 // router/index.ts
 // Configuracao do Vue Router
 
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { type RouteRecordRaw } from 'vue-router'
+import LandingPage from '@/views/LandingPage.vue'
 import CanvasListView from '@/views/CanvasListView.vue'
 import CanvasView from '@/views/CanvasView.vue'
 
 /**
  * Definicao das rotas da aplicacao
+ * Exportado para uso com ViteSSG
  */
-const routes: RouteRecordRaw[] = [
+export const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    redirect: '/canvases'
+    name: 'landing',
+    component: LandingPage,
+    meta: {
+      title: 'gyul - Canvas de ideias'
+    }
   },
   {
     path: '/canvases',
@@ -38,24 +44,18 @@ const routes: RouteRecordRaw[] = [
 ]
 
 /**
- * Instancia do router
+ * Navigation guard callback para atualizar titulo da pagina
+ * Usado pelo ViteSSG durante setup do router
  */
-const router = createRouter({
-  history: createWebHistory(),
-  routes
-})
-
-/**
- * Navigation guard para atualizar titulo da pagina
- */
-router.beforeEach((to, _from, next) => {
-  // Atualiza titulo da pagina
-  const title = to.meta.title as string | undefined
-  if (title) {
-    document.title = title
-  }
-
-  next()
-})
-
-export default router
+export function setupRouterGuards(router: ReturnType<typeof import('vue-router').createRouter>) {
+  router.beforeEach((to, _from, next) => {
+    // Atualiza titulo da pagina (apenas no cliente)
+    if (typeof document !== 'undefined') {
+      const title = to.meta.title as string | undefined
+      if (title) {
+        document.title = title
+      }
+    }
+    next()
+  })
+}

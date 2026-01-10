@@ -18,8 +18,16 @@ test.describe('Project Setup', () => {
     await expect(page.getByText('gyul')).toBeVisible()
   })
 
-  test('should redirect root to /canvases', async ({ page }) => {
+  test('should show landing page at root', async ({ page }) => {
     await page.goto('/')
+    await page.waitForLoadState('networkidle')
+    
+    // Landing page has CTA to enter app
+    await expect(page.getByRole('link', { name: 'Entrar no App' })).toBeVisible()
+  })
+
+  test('should redirect unknown routes to /canvases', async ({ page }) => {
+    await page.goto('/unknown-route-that-does-not-exist')
     await page.waitForURL('**/canvases')
     expect(page.url()).toContain('/canvases')
   })

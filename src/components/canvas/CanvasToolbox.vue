@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 /**
  * CanvasToolbox - Ferramentas de criacao do canvas
  *
@@ -32,19 +34,30 @@ const emit = defineEmits<{
 const handleNewFlowClick = () => {
   emit('activate-create-mode')
 }
+
+const buttonClasses = computed(() => [
+  'flex items-center gap-2 px-4 py-2 bg-transparent border-none rounded-md text-sm font-medium cursor-pointer transition-all duration-fast whitespace-nowrap',
+  props.isActive
+    ? 'bg-brand-500 text-white shadow-node-selected hover:bg-brand-600'
+    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 active:scale-[0.98]'
+])
 </script>
 
 <template>
-  <div class="canvas-toolbox" data-testid="canvas-toolbox">
+  <div 
+    class="absolute left-6 top-1/2 -translate-y-1/2 z-controls flex flex-col gap-1 p-1 bg-white border border-gray-200 rounded-md shadow-node"
+    data-testid="canvas-toolbox"
+  >
     <button
       type="button"
-      class="canvas-toolbox__btn"
-      :class="{ 'canvas-toolbox__btn--active': props.isActive }"
+      :class="buttonClasses"
+      :data-active="isActive || undefined"
       title="Novo Fluxo"
       data-testid="toolbox-new-flow"
       @click="handleNewFlowClick"
     >
       <svg
+        class="w-[18px] h-[18px] flex-shrink-0"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -55,76 +68,7 @@ const handleNewFlowClick = () => {
         <line x1="12" y1="5" x2="12" y2="19" />
         <line x1="5" y1="12" x2="19" y2="12" />
       </svg>
-      <span class="canvas-toolbox__label">Novo Fluxo</span>
+      <span class="leading-none">Novo Fluxo</span>
     </button>
   </div>
 </template>
-
-<style scoped>
-/* =============================================================================
-   CANVAS TOOLBOX - Quiet UI
-   ============================================================================= */
-
-.canvas-toolbox {
-  position: absolute;
-  left: var(--space-6);
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: var(--z-controls);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-1);
-  background: var(--surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-sm);
-}
-
-.canvas-toolbox__btn {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  background: none;
-  border: none;
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  white-space: nowrap;
-}
-
-.canvas-toolbox__btn:hover {
-  background: var(--surface-muted);
-  color: var(--text-primary);
-}
-
-.canvas-toolbox__btn:active {
-  transform: scale(0.98);
-}
-
-.canvas-toolbox__btn svg {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-}
-
-.canvas-toolbox__label {
-  line-height: 1;
-}
-
-/* Estado ativo - modo de criacao */
-.canvas-toolbox__btn--active {
-  background: var(--accent-primary);
-  color: var(--text-inverse);
-  box-shadow: 0 0 0 2px var(--selection-color);
-}
-
-.canvas-toolbox__btn--active:hover {
-  background: var(--accent-primary-hover);
-  color: var(--text-inverse);
-}
-</style>

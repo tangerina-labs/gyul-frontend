@@ -26,7 +26,7 @@ test.describe('Criacao Explicita de Fluxos', () => {
   test('criar fluxo via botao + clique', async ({ page }) => {
     await page.getByTestId('toolbox-new-flow').click()
 
-    await expect(page.getByTestId('toolbox-new-flow')).toHaveClass(/--active/)
+    await expect(page.getByTestId('toolbox-new-flow')).toHaveAttribute('data-active', 'true')
     await expect(page.getByTestId('canvas-creating-overlay')).toBeVisible()
 
     const canvas = page.locator('.vue-flow__pane')
@@ -34,7 +34,7 @@ test.describe('Criacao Explicita de Fluxos', () => {
 
     // Mode deactivates immediately after click
     await expect(page.getByTestId('canvas-creating-overlay')).not.toBeVisible()
-    await expect(page.getByTestId('toolbox-new-flow')).not.toHaveClass(/--active/)
+    await expect(page.getByTestId('toolbox-new-flow')).not.toHaveAttribute('data-active', 'true')
 
     await expect(page.getByTestId('node-type-menu')).toBeVisible()
 
@@ -50,7 +50,7 @@ test.describe('Criacao Explicita de Fluxos', () => {
     await page.keyboard.press('Escape')
 
     await expect(page.getByTestId('canvas-creating-overlay')).not.toBeVisible()
-    await expect(page.getByTestId('toolbox-new-flow')).not.toHaveClass(/--active/)
+    await expect(page.getByTestId('toolbox-new-flow')).not.toHaveAttribute('data-active', 'true')
 
     const canvas = page.locator('.vue-flow__pane')
     await canvas.click({ position: { x: 300, y: 300 } })
@@ -66,7 +66,7 @@ test.describe('Criacao Explicita de Fluxos', () => {
 
     // Mode deactivates before menu interaction
     await expect(page.getByTestId('canvas-creating-overlay')).not.toBeVisible()
-    await expect(page.getByTestId('toolbox-new-flow')).not.toHaveClass(/--active/)
+    await expect(page.getByTestId('toolbox-new-flow')).not.toHaveAttribute('data-active', 'true')
 
     await expect(page.getByTestId('node-type-menu')).toBeVisible()
 
@@ -93,6 +93,6 @@ test.describe('Criacao Explicita de Fluxos', () => {
     await page.getByTestId('toolbox-new-flow').click()
 
     await expect(page.getByTestId('canvas-creating-overlay')).not.toBeVisible()
-    await expect(page.getByTestId('toolbox-new-flow')).not.toHaveClass(/--active/)
+    await expect(page.getByTestId('toolbox-new-flow')).not.toHaveAttribute('data-active', 'true')
   })
 })

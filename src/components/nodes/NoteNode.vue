@@ -79,7 +79,7 @@ const handleAddChild = () => {
 
 <template>
   <div 
-    class="note-node"
+    class="relative w-[300px]"
     :data-status="isEditing ? 'editing' : 'readonly'"
   >
     <BaseCard
@@ -92,7 +92,7 @@ const handleAddChild = () => {
         ref="textareaRef"
         v-model="contentInput"
         placeholder="Escreva sua anotacao..."
-        class="note-node__textarea"
+        class="w-full min-h-[80px] max-h-[200px] p-2 bg-transparent border-none font-sans text-base leading-normal text-gray-900 resize-none placeholder:text-gray-400 focus:outline-none"
         rows="3"
         data-testid="note-textarea"
         @input="handleInput"
@@ -100,25 +100,25 @@ const handleAddChild = () => {
         @keydown="handleKeydown"
       />
       
-      <div v-else class="note-node__content" data-testid="note-content">
-        <p v-if="hasContent" class="note-node__text">
+      <div v-else class="min-h-[40px]" data-testid="note-content">
+        <p v-if="hasContent" class="text-base leading-normal text-gray-900 whitespace-pre-wrap break-words m-0">
           {{ data.content }}
         </p>
-        <p v-else class="note-node__empty">
+        <p v-else class="text-sm text-gray-400 italic m-0">
           (Nota vazia)
         </p>
       </div>
       
       <template v-if="!isEditing && hasContent" #footer>
-        <div class="note-node__footer">
+        <div class="flex justify-end">
           <button
             type="button"
-            class="note-node__add-child"
+            class="flex items-center justify-center w-7 h-7 bg-transparent border border-gray-200 rounded-md text-gray-600 cursor-pointer transition-all duration-fast hover:bg-accent-note hover:border-accent-note hover:text-white"
             title="Adicionar no filho"
             data-testid="note-add-child-btn"
             @click="handleAddChild"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
@@ -135,106 +135,13 @@ const handleAddChild = () => {
       @delete="emit('delete')"
     />
     
-    <div v-if="isEditing" class="note-node__hints" data-testid="note-hints">
-      <span>Enter para salvar</span>
-      <span>Shift+Enter para nova linha</span>
+    <div 
+      v-if="isEditing" 
+      class="absolute -bottom-6 left-0 right-0 flex justify-center gap-4 text-xs text-gray-400"
+      data-testid="note-hints"
+    >
+      <span class="bg-gray-50 px-1.5 py-0.5 rounded-md">Enter para salvar</span>
+      <span class="bg-gray-50 px-1.5 py-0.5 rounded-md">Shift+Enter para nova linha</span>
     </div>
   </div>
 </template>
-
-<style scoped>
-.note-node {
-  position: relative;
-  width: 300px;
-}
-
-.note-node__textarea {
-  width: 100%;
-  min-height: 80px;
-  max-height: 200px;
-  padding: var(--space-2);
-  background: transparent;
-  border: none;
-  font-family: var(--font-sans);
-  font-size: var(--font-size-md);
-  line-height: var(--line-height-normal);
-  color: var(--text-primary);
-  resize: none;
-}
-
-.note-node__textarea:focus {
-  outline: none;
-}
-
-.note-node__textarea::placeholder {
-  color: var(--text-muted);
-}
-
-.note-node__content {
-  min-height: 40px;
-}
-
-.note-node__text {
-  font-size: var(--font-size-md);
-  line-height: var(--line-height-normal);
-  color: var(--text-primary);
-  white-space: pre-wrap;
-  word-break: break-word;
-  margin: 0;
-}
-
-.note-node__empty {
-  font-size: var(--font-size-sm);
-  color: var(--text-muted);
-  font-style: italic;
-  margin: 0;
-}
-
-.note-node__footer {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.note-node__add-child {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: transparent;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.note-node__add-child:hover {
-  background: var(--accent-note);
-  border-color: var(--accent-note);
-  color: var(--text-inverse);
-}
-
-.note-node__add-child svg {
-  width: 14px;
-  height: 14px;
-}
-
-.note-node__hints {
-  position: absolute;
-  bottom: -24px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  gap: var(--space-4);
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
-}
-
-.note-node__hints span {
-  background: var(--surface-canvas);
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
-}
-</style>

@@ -13,56 +13,21 @@
 </script>
 
 <template>
-  <div class="canvas-card-skeleton" data-testid="canvas-card-skeleton">
-    <div class="skeleton skeleton--title" data-testid="skeleton-title" />
-    <div class="skeleton skeleton--meta" data-testid="skeleton-meta" />
-    <div class="skeleton skeleton--preview" data-testid="skeleton-preview" />
+  <div 
+    class="bg-white border border-gray-200 rounded-lg p-4"
+    data-testid="canvas-card-skeleton"
+  >
+    <div 
+      class="w-3/5 h-5 mb-2 rounded bg-gradient-to-r from-gray-50 via-gray-200 to-gray-50 bg-[length:200%_100%] animate-shimmer"
+      data-testid="skeleton-title" 
+    />
+    <div 
+      class="w-2/5 h-3.5 mb-4 rounded bg-gradient-to-r from-gray-50 via-gray-200 to-gray-50 bg-[length:200%_100%] animate-shimmer"
+      data-testid="skeleton-meta" 
+    />
+    <div 
+      class="w-full h-20 rounded bg-gradient-to-r from-gray-50 via-gray-200 to-gray-50 bg-[length:200%_100%] animate-shimmer"
+      data-testid="skeleton-preview" 
+    />
   </div>
 </template>
-
-<style scoped>
-.canvas-card-skeleton {
-  background: white;
-  border: 1px solid var(--note-border);
-  border-radius: var(--node-radius);
-  padding: var(--spacing-md);
-}
-
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--background) 25%,
-    #E5E7EB 50%,
-    var(--background) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 4px;
-}
-
-.skeleton--title {
-  width: 60%;
-  height: 20px;
-  margin-bottom: var(--spacing-sm);
-}
-
-.skeleton--meta {
-  width: 40%;
-  height: 14px;
-  margin-bottom: var(--spacing-md);
-}
-
-.skeleton--preview {
-  width: 100%;
-  height: 80px;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-</style>

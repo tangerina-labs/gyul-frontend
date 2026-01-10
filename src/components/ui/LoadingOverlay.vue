@@ -22,39 +22,19 @@ defineProps<Props>()
 </script>
 
 <template>
-  <div class="loading-overlay" data-testid="loading-overlay">
-    <div class="loading-overlay__content">
+  <div 
+    class="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm z-modal animate-fade-in"
+    data-testid="loading-overlay"
+  >
+    <div class="flex flex-col items-center gap-4">
       <LoadingSpinner size="lg" />
-      <p v-if="message" class="loading-overlay__message" data-testid="loading-overlay-message">
+      <p 
+        v-if="message" 
+        class="text-gray-600 text-sm m-0"
+        data-testid="loading-overlay-message"
+      >
         {{ message }}
       </p>
     </div>
   </div>
 </template>
-
-<style scoped>
-.loading-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(2px);
-  z-index: var(--z-modal);
-  animation: fadeIn var(--transition-fast);
-}
-
-.loading-overlay__content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-md);
-}
-
-.loading-overlay__message {
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  margin: 0;
-}
-</style>

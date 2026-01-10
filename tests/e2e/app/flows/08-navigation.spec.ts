@@ -33,11 +33,11 @@ test.describe('Navegacao', () => {
     await expect(page.getByRole('heading', { name: 'Canvas Navegacao' })).toBeVisible()
   })
 
-  test('rota raiz redireciona para /canvases', async ({ page }) => {
+  test('rota raiz mostra landing page', async ({ page }) => {
     await page.goto('/')
-    await page.waitForURL('**/canvases')
-    expect(page.url()).toContain('/canvases')
-    await expectOnCanvasList(page)
+    await page.waitForLoadState('networkidle')
+    // Landing page has CTA to enter app
+    await expect(page.getByRole('link', { name: 'Entrar no App' })).toBeVisible()
   })
 
   test('rota desconhecida redireciona para /canvases', async ({ page }) => {

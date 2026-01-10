@@ -68,7 +68,7 @@ const handleAddChild = () => {
 
 <template>
   <div 
-    class="question-node"
+    class="relative w-[400px]"
     :data-status="data.status"
   >
     <BaseCard
@@ -77,8 +77,8 @@ const handleAddChild = () => {
       :selected="selected"
       data-testid="question-card"
     >
-      <div class="question-node__prompt-section" data-testid="question-prompt-section">
-        <label class="question-node__label">
+      <div class="flex flex-col gap-2" data-testid="question-prompt-section">
+        <label class="block text-sm font-medium text-gray-600 mb-1">
           Pergunta
         </label>
         
@@ -87,46 +87,52 @@ const handleAddChild = () => {
           ref="textareaRef"
           v-model="promptInput"
           placeholder="Escreva sua pergunta..."
-          class="question-node__textarea"
+          class="w-full min-h-[80px] px-3 py-2 border border-gray-200 rounded-md font-sans text-base leading-normal bg-white text-gray-900 resize-none transition-colors duration-fast placeholder:text-gray-400 focus:outline-none focus:border-accent-question"
           rows="3"
           data-testid="question-textarea"
           @input="resizeTextarea"
           @keydown="handleKeydown"
         />
         
-        <p v-else class="question-node__prompt-text" data-testid="question-prompt-text">
+        <p v-else class="p-2 bg-gray-100 rounded-md text-base leading-normal text-gray-900 m-0" data-testid="question-prompt-text">
           {{ data.prompt }}
         </p>
         
         <button
           v-if="isDraft"
           type="button"
-          class="question-node__submit"
+          class="flex items-center justify-center gap-2 px-3 py-2 bg-accent-question text-white border-none rounded-md text-sm font-medium cursor-pointer transition-colors duration-fast hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="!promptInput.trim()"
           data-testid="question-submit-btn"
           @click="handleSubmit"
         >
           Submeter
-          <span class="question-node__shortcut">Ctrl+Enter</span>
+          <span class="text-xs opacity-70">Ctrl+Enter</span>
         </button>
       </div>
       
       <div 
         v-if="isLoading || isDone" 
-        class="question-node__response-section"
+        class="mt-4 pt-4 border-t border-gray-200"
         data-testid="question-response-section"
       >
-        <div class="question-node__response-header">
-          <span class="question-node__label">Resposta</span>
-          <span v-if="isDone" class="question-node__ai-badge" data-testid="question-ai-badge">AI</span>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm font-medium text-gray-600">Resposta</span>
+          <span 
+            v-if="isDone" 
+            class="px-2 py-0.5 bg-success/10 text-success rounded-md text-xs font-semibold uppercase"
+            data-testid="question-ai-badge"
+          >
+            AI
+          </span>
         </div>
         
-        <div v-if="isLoading" class="question-node__loading" data-testid="question-loading">
+        <div v-if="isLoading" class="flex items-center gap-2 p-4 text-gray-600 text-sm" data-testid="question-loading">
           <LoadingSpinner size="md" />
           <span>Gerando resposta...</span>
         </div>
         
-        <div v-else-if="isDone" class="question-node__response-content" data-testid="question-response-content">
+        <div v-else-if="isDone" class="p-3 bg-gray-100 rounded-md" data-testid="question-response-content">
           <ExpandableText
             :text="data.response || ''"
             :lines="6"
@@ -135,15 +141,15 @@ const handleAddChild = () => {
       </div>
       
       <template v-if="isDone" #footer>
-        <div class="question-node__footer" data-testid="question-footer">
+        <div class="flex justify-end" data-testid="question-footer">
           <button
             type="button"
-            class="question-node__add-child"
+            class="flex items-center gap-1 px-3 py-2 bg-gray-100 border border-gray-200 rounded-md text-gray-600 text-sm cursor-pointer transition-all duration-fast hover:bg-accent-question hover:border-accent-question hover:text-white"
             title="Adicionar no filho"
             data-testid="question-add-child-btn"
             @click="handleAddChild"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
@@ -161,156 +167,3 @@ const handleAddChild = () => {
     />
   </div>
 </template>
-
-<style scoped>
-.question-node {
-  position: relative;
-  width: 400px;
-}
-
-.question-node__label {
-  display: block;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--text-secondary);
-  margin-bottom: var(--space-1);
-}
-
-.question-node__prompt-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.question-node__textarea {
-  width: 100%;
-  min-height: 80px;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-sans);
-  font-size: var(--font-size-md);
-  line-height: var(--line-height-normal);
-  background: var(--surface-node);
-  color: var(--text-primary);
-  resize: none;
-  transition: border-color var(--transition-fast);
-}
-
-.question-node__textarea:focus {
-  outline: none;
-  border-color: var(--accent-question);
-}
-
-.question-node__textarea::placeholder {
-  color: var(--text-muted);
-}
-
-.question-node__prompt-text {
-  padding: var(--space-2);
-  background: var(--surface-muted);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-md);
-  line-height: var(--line-height-normal);
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.question-node__submit {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  background: var(--accent-question);
-  color: var(--text-inverse);
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
-
-.question-node__submit:hover:not(:disabled) {
-  background: var(--color-violet-500);
-}
-
-.question-node__submit:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.question-node__shortcut {
-  font-size: var(--font-size-xs);
-  opacity: 0.7;
-}
-
-.question-node__response-section {
-  margin-top: var(--space-4);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--border-subtle);
-}
-
-.question-node__response-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-2);
-}
-
-.question-node__ai-badge {
-  padding: 2px 8px;
-  background: var(--color-success-light);
-  color: var(--color-success);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  text-transform: uppercase;
-}
-
-.question-node__loading {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-4);
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.question-node__response-content {
-  padding: var(--space-3);
-  background: var(--surface-muted);
-  border-radius: var(--radius-sm);
-}
-
-.question-node__footer {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.question-node__add-child {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-2) var(--space-3);
-  background: var(--surface-muted);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.question-node__add-child:hover {
-  background: var(--accent-question);
-  border-color: var(--accent-question);
-  color: var(--text-inverse);
-}
-
-.question-node__add-child svg {
-  width: 14px;
-  height: 14px;
-}
-</style>

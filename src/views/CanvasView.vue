@@ -6,6 +6,7 @@ import {
   useVueFlow,
   applyNodeChanges,
   applyEdgeChanges,
+  ConnectionMode
 } from "@vue-flow/core";
 import type { NodeChange, EdgeChange } from "@vue-flow/core";
 import { Background } from "@vue-flow/background";
@@ -574,15 +575,16 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="canvas-view" data-testid="canvas-view">
-    <header class="canvas-view__header" data-testid="canvas-header">
+  <div class="flex flex-col w-full h-screen bg-gray-50" data-testid="canvas-view">
+    <header class="flex items-center gap-4 px-6 py-4 bg-white border-b border-gray-200 z-controls" data-testid="canvas-header">
       <button
         type="button"
-        class="canvas-view__back"
+        class="flex items-center gap-1 px-4 py-2 bg-transparent border border-gray-200 rounded-lg text-gray-600 text-sm cursor-pointer transition-all duration-fast hover:bg-gray-50 hover:text-gray-900"
         data-testid="canvas-back-btn"
         @click="router.push({ name: 'canvases' })"
       >
         <svg
+          class="w-4 h-4"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -593,14 +595,14 @@ onMounted(async () => {
         Voltar
       </button>
 
-      <h1 class="canvas-view__title" data-testid="canvas-title">
+      <h1 class="text-lg font-semibold text-gray-900" data-testid="canvas-title">
         {{ initialCanvas.name }}
       </h1>
     </header>
 
     <div
       ref="canvasContainerRef"
-      class="canvas-view__container"
+      class="flex-1 relative"
       :class="{ 'canvas-creating-mode': isCreating }"
       data-testid="canvas-container"
     >
@@ -617,7 +619,8 @@ onMounted(async () => {
         :connect-on-click="false"
         :nodes-connectable="false"
         :edges-connectable="false"
-        class="canvas-view__flow"
+        :connection-mode="ConnectionMode.Loose"
+        class="w-full h-full"
         data-testid="vue-flow"
         @nodes-change="onNodesChange"
         @edges-change="onEdgesChange"
@@ -686,89 +689,10 @@ onMounted(async () => {
 
     <div
       v-if="nodes.length === 0 && !isCreating"
-      class="canvas-view__empty-hint"
+      class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-8 py-6 bg-white border-2 border-dashed border-gray-200 rounded-lg text-gray-600 text-center pointer-events-none"
       data-testid="canvas-empty-hint"
     >
-      <p>Clique em "+ Novo Fluxo" para iniciar</p>
+      <p class="text-base m-0">Clique em "+ Novo Fluxo" para iniciar</p>
     </div>
   </div>
 </template>
-
-<style scoped>
-.canvas-view {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100vh;
-  background: var(--background);
-}
-
-.canvas-view__header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md) var(--spacing-lg);
-  background: white;
-  border-bottom: 1px solid var(--note-border);
-  z-index: var(--z-controls);
-}
-
-.canvas-view__back {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: none;
-  border: 1px solid var(--note-border);
-  border-radius: 8px;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.canvas-view__back:hover {
-  background: var(--background);
-  color: var(--text-primary);
-}
-
-.canvas-view__back svg {
-  width: 16px;
-  height: 16px;
-}
-
-.canvas-view__title {
-  font-size: var(--text-lg);
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.canvas-view__container {
-  flex: 1;
-  position: relative;
-}
-
-.canvas-view__flow {
-  width: 100%;
-  height: 100%;
-}
-
-.canvas-view__empty-hint {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  padding: var(--spacing-lg) var(--spacing-xl);
-  background: white;
-  border: 2px dashed var(--note-border);
-  border-radius: var(--node-radius);
-  color: var(--text-secondary);
-  text-align: center;
-  pointer-events: none;
-}
-
-.canvas-view__empty-hint p {
-  font-size: var(--text-base);
-  margin: 0;
-}
-</style>

@@ -77,11 +77,11 @@ const textStyle = computed(() => {
 </script>
 
 <template>
-  <div class="expandable-text">
+  <div class="relative">
     <p 
       ref="textRef"
       :style="textStyle"
-      class="expandable-text__content"
+      class="leading-normal text-gray-900 m-0 transition-all duration-base"
       data-testid="expandable-text-content"
     >
       {{ text }}
@@ -90,7 +90,7 @@ const textStyle = computed(() => {
     <button
       v-if="showToggle"
       type="button"
-      class="expandable-text__toggle"
+      class="inline-block mt-1 p-0 bg-transparent border-none text-brand-500 text-sm font-medium cursor-pointer transition-colors duration-fast hover:text-brand-600 hover:underline"
       data-testid="expandable-text-toggle"
       @click="toggle"
     >
@@ -98,34 +98,3 @@ const textStyle = computed(() => {
     </button>
   </div>
 </template>
-
-<style scoped>
-.expandable-text {
-  position: relative;
-}
-
-.expandable-text__content {
-  line-height: var(--line-height-normal);
-  color: var(--text-primary);
-  transition: max-height var(--transition-normal);
-  margin: 0;
-}
-
-.expandable-text__toggle {
-  display: inline-block;
-  margin-top: var(--spacing-xs);
-  padding: 0;
-  background: none;
-  border: none;
-  color: var(--hover);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  cursor: pointer;
-  transition: color var(--transition-fast);
-}
-
-.expandable-text__toggle:hover {
-  color: var(--tweet-border);
-  text-decoration: underline;
-}
-</style>

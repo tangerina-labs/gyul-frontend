@@ -15,7 +15,8 @@ export async function startFresh(page: Page): Promise<void> {
     ;(window as any).__PLAYWRIGHT_TEST__ = true
   })
 
-  await page.goto('/')
+  // Go to canvases list (not landing page) to start fresh
+  await page.goto('/canvases')
 
   await page.evaluate(() => localStorage.clear())
 

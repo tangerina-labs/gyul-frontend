@@ -62,8 +62,7 @@ const formattedTimestamp = computed(() => {
 
 <template>
   <div 
-    class="tweet-node" 
-    :class="{ 'tweet-node--empty': isEmpty || isError }"
+    :class="['relative', isEmpty || isError ? 'w-[350px]' : 'w-[400px]']"
     :data-status="data.status"
   >
     <BaseCard
@@ -74,17 +73,17 @@ const formattedTimestamp = computed(() => {
       :error="isError"
       data-testid="tweet-card"
     >
-      <div class="tweet-node__input-section" data-testid="tweet-input-section">
-        <label class="tweet-node__label">
+      <div class="flex flex-col gap-2" data-testid="tweet-input-section">
+        <label class="text-sm font-medium text-gray-600">
           Cole a URL do tweet
         </label>
         
-        <div class="tweet-node__input-group">
+        <div class="flex gap-2">
           <input
             v-model="urlInput"
             type="url"
             placeholder="https://twitter.com/user/status/123..."
-            class="tweet-node__input"
+            class="flex-1 px-3 py-2 border border-gray-200 rounded-md text-sm font-sans bg-white text-gray-900 transition-colors duration-fast placeholder:text-gray-400 focus:outline-none focus:border-brand-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             :disabled="isLoading"
             data-testid="tweet-url-input"
             @keydown="handleKeydown"
@@ -92,7 +91,7 @@ const formattedTimestamp = computed(() => {
           
           <button
             type="button"
-            class="tweet-node__submit"
+            class="px-3 py-2 bg-brand-500 text-white border-none rounded-md text-sm font-medium cursor-pointer transition-colors duration-fast hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
             :disabled="isLoading || !urlInput.trim()"
             data-testid="tweet-submit-btn"
             @click="handleSubmit"
@@ -101,7 +100,7 @@ const formattedTimestamp = computed(() => {
           </button>
         </div>
         
-        <p v-if="isError && data.error" class="tweet-node__error" data-testid="tweet-error-message">
+        <p v-if="isError && data.error" class="text-danger text-sm m-0" data-testid="tweet-error-message">
           {{ data.error }}
         </p>
       </div>
@@ -114,7 +113,7 @@ const formattedTimestamp = computed(() => {
       :selected="selected"
       data-testid="tweet-card"
     >
-      <div class="tweet-node__loading" data-testid="tweet-loading">
+      <div class="flex flex-col items-center justify-center gap-4 p-6 text-gray-600" data-testid="tweet-loading">
         <LoadingSpinner size="lg" />
         <p>Carregando tweet...</p>
       </div>
@@ -128,20 +127,20 @@ const formattedTimestamp = computed(() => {
       data-testid="tweet-card"
     >
       <template #header>
-        <div class="tweet-node__author" data-testid="tweet-author">
+        <div class="flex items-center gap-2" data-testid="tweet-author">
           <img
             v-if="data.author?.avatar"
             :src="data.author.avatar"
             :alt="data.author.name"
-            class="tweet-node__avatar"
+            class="w-12 h-12 rounded-full object-cover"
             data-testid="tweet-avatar"
           />
-          <div class="tweet-node__author-info">
-            <span class="tweet-node__author-name" data-testid="tweet-author-name">{{ data.author?.name }}</span>
-            <span class="tweet-node__author-handle" data-testid="tweet-author-handle">{{ data.author?.handle }}</span>
+          <div class="flex flex-col flex-1">
+            <span class="font-semibold text-gray-900" data-testid="tweet-author-name">{{ data.author?.name }}</span>
+            <span class="text-sm text-gray-600" data-testid="tweet-author-handle">{{ data.author?.handle }}</span>
           </div>
           
-          <svg class="tweet-node__x-icon" viewBox="0 0 24 24" fill="currentColor" data-testid="tweet-x-icon">
+          <svg class="w-5 h-5 text-black" viewBox="0 0 24 24" fill="currentColor" data-testid="tweet-x-icon">
             <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
           </svg>
         </div>
@@ -155,19 +154,19 @@ const formattedTimestamp = computed(() => {
       </div>
       
       <template #footer>
-        <div class="tweet-node__footer" data-testid="tweet-footer">
-          <span class="tweet-node__timestamp" data-testid="tweet-timestamp">
+        <div class="flex items-center justify-between" data-testid="tweet-footer">
+          <span class="text-sm text-gray-400" data-testid="tweet-timestamp">
             {{ formattedTimestamp }}
           </span>
           
           <button
             type="button"
-            class="tweet-node__add-child"
+            class="flex items-center justify-center w-8 h-8 bg-gray-100 border border-gray-200 rounded-md text-gray-600 cursor-pointer transition-all duration-fast hover:bg-brand-500 hover:border-brand-500 hover:text-white"
             title="Adicionar no filho"
             data-testid="tweet-add-child-btn"
             @click="handleAddChild"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
@@ -185,165 +184,3 @@ const formattedTimestamp = computed(() => {
     />
   </div>
 </template>
-
-<style scoped>
-.tweet-node {
-  position: relative;
-  width: 400px;
-}
-
-.tweet-node--empty {
-  width: 350px;
-}
-
-.tweet-node__input-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.tweet-node__label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--text-secondary);
-}
-
-.tweet-node__input-group {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.tweet-node__input {
-  flex: 1;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  font-family: var(--font-sans);
-  background: var(--surface-node);
-  color: var(--text-primary);
-  transition: border-color var(--transition-fast);
-}
-
-.tweet-node__input::placeholder {
-  color: var(--text-muted);
-}
-
-.tweet-node__input:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-}
-
-.tweet-node__input:disabled {
-  background: var(--surface-muted);
-  cursor: not-allowed;
-}
-
-.tweet-node__submit {
-  padding: var(--space-2) var(--space-3);
-  background: var(--accent-primary);
-  color: var(--text-inverse);
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
-
-.tweet-node__submit:hover:not(:disabled) {
-  background: var(--accent-primary-hover);
-}
-
-.tweet-node__submit:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.tweet-node__error {
-  color: var(--color-danger);
-  font-size: var(--font-size-sm);
-  margin: 0;
-}
-
-.tweet-node__loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-4);
-  padding: var(--space-6);
-  color: var(--text-secondary);
-}
-
-.tweet-node__author {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.tweet-node__avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-full);
-  object-fit: cover;
-}
-
-.tweet-node__author-info {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.tweet-node__author-name {
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-primary);
-}
-
-.tweet-node__author-handle {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-}
-
-.tweet-node__x-icon {
-  width: 20px;
-  height: 20px;
-  color: var(--text-muted);
-}
-
-.tweet-node__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.tweet-node__timestamp {
-  font-size: var(--font-size-sm);
-  color: var(--text-muted);
-}
-
-.tweet-node__add-child {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: var(--surface-muted);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.tweet-node__add-child:hover {
-  background: var(--accent-primary);
-  border-color: var(--accent-primary);
-  color: var(--text-inverse);
-}
-
-.tweet-node__add-child svg {
-  width: 16px;
-  height: 16px;
-}
-</style>

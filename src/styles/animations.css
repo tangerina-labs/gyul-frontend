@@ -1,0 +1,133 @@
+/* =============================================================================
+   ANIMATIONS - Custom keyframe animations for gyul
+   
+   These animations are kept separate from Tailwind for better control
+   and to maintain compatibility with Vue Flow and custom components.
+   ============================================================================= */
+
+/* ---------------------------------------------------------------------------
+   Node Enter - Smooth entrance animation
+   --------------------------------------------------------------------------- */
+@keyframes nodeEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.node-enter {
+  animation: nodeEnter 180ms ease-out;
+}
+
+/* ---------------------------------------------------------------------------
+   Node Exit - Exit animation
+   --------------------------------------------------------------------------- */
+@keyframes nodeExit {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+.node-exit {
+  animation: nodeExit 120ms ease-in;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Node Delete Exit - Specific animation for deletion
+   
+   Different from standard nodeExit, adds subtle rotation to
+   visually indicate the node is being removed (not just exiting).
+   --------------------------------------------------------------------------- */
+@keyframes nodeDeleteExit {
+  from {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.8) rotate(5deg);
+  }
+}
+
+.node-delete-exit {
+  animation: nodeDeleteExit 150ms ease-in forwards;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Loading Bar - Animated progress bar (replaces borderPulse)
+   --------------------------------------------------------------------------- */
+@keyframes loadingSlide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Spinner - Rotation for loading indicators
+   --------------------------------------------------------------------------- */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* ---------------------------------------------------------------------------
+   Fade In - Subtle fade for elements
+   --------------------------------------------------------------------------- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 180ms ease-out;
+}
+
+/* ---------------------------------------------------------------------------
+   Edge Flow - Animation for highlighted edges
+   --------------------------------------------------------------------------- */
+@keyframes edgeFlow {
+  from {
+    stroke-dashoffset: 12;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Create Mode Glow - Pulsing glow when in creation mode
+   --------------------------------------------------------------------------- */
+@keyframes createModeGlow {
+  0%, 100% {
+    box-shadow: inset 0 0 60px rgba(20, 184, 166, 0.15);
+  }
+  50% {
+    box-shadow: inset 0 0 80px rgba(20, 184, 166, 0.12);
+  }
+}

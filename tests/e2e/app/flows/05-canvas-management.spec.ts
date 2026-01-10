@@ -135,7 +135,8 @@ test.describe('Gestao de Canvases', () => {
     await card.getByRole('button', { name: /deletar/i }).click()
     await expect(page.getByText(/certeza/i)).toBeVisible()
 
-    await page.locator('.modal-overlay').click({ position: { x: 10, y: 10 } })
+    // Click on the modal overlay (outside the modal content) to dismiss
+    await page.getByTestId('delete-modal').click({ position: { x: 10, y: 10 } })
 
     await expect(page.getByText(/certeza/i)).not.toBeVisible()
     await expectCanvasInList(page, 'Canvas Modal')

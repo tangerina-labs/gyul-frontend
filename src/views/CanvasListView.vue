@@ -87,23 +87,30 @@ const formatRelativeDate = (dateString: string): string => {
 
   return formatDate(dateString)
 }
+
+// Preview node colors
+const previewNodeColors: Record<string, string> = {
+  tweet: 'bg-accent-tweet',
+  question: 'bg-accent-question',
+  note: 'bg-amber-600'
+}
 </script>
 
 <template>
-  <div class="canvas-list" data-testid="canvas-list-view">
-    <header class="canvas-list__header">
-      <div class="canvas-list__brand">
-        <h1 class="canvas-list__title">gyul</h1>
-        <p class="canvas-list__subtitle">Explore tweets com IA</p>
+  <div class="min-h-screen bg-gray-50" data-testid="canvas-list-view">
+    <header class="flex items-center justify-between px-8 py-6 bg-white border-b border-gray-200">
+      <div class="flex flex-col">
+        <h1 class="text-xl font-bold text-gray-900">gyul</h1>
+        <p class="text-sm text-gray-600">Explore tweets com IA</p>
       </div>
 
       <button
         type="button"
-        class="canvas-list__create-btn"
+        class="flex items-center gap-2 px-6 py-2 bg-brand-500 text-white border-none rounded-lg text-sm font-medium cursor-pointer transition-colors duration-fast hover:bg-brand-600"
         data-testid="create-canvas-btn"
         @click="openCreateModal"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="5" x2="12" y2="19" />
           <line x1="5" y1="12" x2="19" y2="12" />
         </svg>
@@ -111,18 +118,18 @@ const formatRelativeDate = (dateString: string): string => {
       </button>
     </header>
 
-    <main class="canvas-list__content">
-      <div v-if="sortedCanvases.length === 0" class="canvas-list__empty" data-testid="empty-state">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <main class="p-8 max-w-[1200px] mx-auto">
+      <div v-if="sortedCanvases.length === 0" class="flex flex-col items-center justify-center py-16 text-center" data-testid="empty-state">
+        <svg class="w-16 h-16 text-gray-400 mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path
             d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
           />
         </svg>
-        <h2>Nenhum canvas ainda</h2>
-        <p>Crie seu primeiro canvas para comecar a explorar</p>
+        <h2 class="text-lg font-semibold text-gray-900 mb-2">Nenhum canvas ainda</h2>
+        <p class="text-gray-600 mb-6">Crie seu primeiro canvas para comecar a explorar</p>
         <button
           type="button"
-          class="canvas-list__empty-btn"
+          class="px-6 py-2 bg-brand-500 text-white border-none rounded-lg text-sm font-medium cursor-pointer hover:bg-brand-600"
           data-testid="create-first-canvas-btn"
           @click="openCreateModal"
         >
@@ -130,24 +137,24 @@ const formatRelativeDate = (dateString: string): string => {
         </button>
       </div>
 
-      <div v-else class="canvas-list__grid" data-testid="canvas-grid">
+      <div v-else class="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-6" data-testid="canvas-grid">
         <article
           v-for="canvas in sortedCanvases"
           :key="canvas.id"
-          class="canvas-card"
+          class="group bg-white border border-gray-200 rounded-lg p-4 cursor-pointer transition-all duration-fast hover:border-brand-500 hover:shadow-node-hover"
           :data-testid="`canvas-card-${canvas.id}`"
           @click="handleSelect(canvas.id)"
         >
-          <div class="canvas-card__header">
-            <h3 class="canvas-card__name" data-testid="canvas-name">{{ canvas.name }}</h3>
+          <div class="flex items-start justify-between mb-2">
+            <h3 class="text-base font-semibold text-gray-900" data-testid="canvas-name">{{ canvas.name }}</h3>
             <button
               type="button"
-              class="canvas-card__delete"
+              class="p-1 bg-transparent border-none text-gray-400 cursor-pointer opacity-0 transition-all duration-fast group-hover:opacity-100 hover:text-danger [.group:hover_&]:opacity-100"
               title="Deletar"
               data-testid="delete-canvas-btn"
               @click.stop="confirmDelete(canvas)"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path
                   d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                 />
@@ -155,21 +162,20 @@ const formatRelativeDate = (dateString: string): string => {
             </button>
           </div>
 
-          <div class="canvas-card__meta">
-            <span class="canvas-card__nodes" data-testid="canvas-node-count">
+          <div class="flex gap-4 text-sm text-gray-600 mb-4">
+            <span data-testid="canvas-node-count">
               {{ canvas.nodes.length }} nos
             </span>
-            <span class="canvas-card__date" data-testid="canvas-date">
+            <span data-testid="canvas-date">
               {{ formatRelativeDate(canvas.updatedAt) }}
             </span>
           </div>
 
-          <div class="canvas-card__preview">
+          <div class="relative h-20 bg-gray-50 rounded-lg overflow-hidden">
             <div
               v-for="(node, index) in canvas.nodes.slice(0, 3)"
               :key="node.id"
-              class="canvas-card__preview-node"
-              :class="`canvas-card__preview-node--${node.type}`"
+              :class="['absolute w-10 h-5 rounded opacity-60', previewNodeColors[node.type] || 'bg-gray-400']"
               :style="{ left: `${20 + index * 30}%`, top: `${30 + index * 15}%` }"
             />
           </div>
@@ -177,29 +183,30 @@ const formatRelativeDate = (dateString: string): string => {
       </div>
     </main>
 
+    <!-- Create Modal -->
     <div
       v-if="showCreateModal"
-      class="modal-overlay"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-modal"
       data-testid="create-modal"
       @click.self="showCreateModal = false"
     >
-      <div class="modal">
-        <h2 class="modal__title">Novo Canvas</h2>
+      <div class="bg-white rounded-lg p-6 w-full max-w-[400px] animate-fade-in">
+        <h2 class="text-lg font-semibold mb-4">Novo Canvas</h2>
 
         <input
           ref="createInputRef"
           v-model="newCanvasName"
           type="text"
           placeholder="Nome do canvas"
-          class="modal__input"
+          class="w-full px-4 py-2 border border-gray-200 rounded-lg text-base mb-6 focus:outline-none focus:border-brand-500"
           data-testid="canvas-name-input"
           @keydown="handleCreateKeydown"
         />
 
-        <div class="modal__actions">
+        <div class="flex justify-end gap-2">
           <button
             type="button"
-            class="modal__btn modal__btn--secondary"
+            class="px-6 py-2 bg-gray-50 text-gray-600 border-none rounded-lg text-sm font-medium cursor-pointer transition-colors duration-fast hover:bg-gray-200"
             data-testid="cancel-create-btn"
             @click="showCreateModal = false"
           >
@@ -207,7 +214,7 @@ const formatRelativeDate = (dateString: string): string => {
           </button>
           <button
             type="button"
-            class="modal__btn modal__btn--primary"
+            class="px-6 py-2 bg-brand-500 text-white border-none rounded-lg text-sm font-medium cursor-pointer transition-colors duration-fast hover:bg-brand-600"
             data-testid="confirm-create-btn"
             @click="handleCreate"
           >
@@ -217,23 +224,24 @@ const formatRelativeDate = (dateString: string): string => {
       </div>
     </div>
 
+    <!-- Delete Modal -->
     <div
       v-if="canvasToDelete"
-      class="modal-overlay"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-modal"
       data-testid="delete-modal"
       @click.self="cancelDelete"
     >
-      <div class="modal">
-        <h2 class="modal__title">Deletar Canvas</h2>
-        <p class="modal__message">
+      <div class="bg-white rounded-lg p-6 w-full max-w-[400px] animate-fade-in">
+        <h2 class="text-lg font-semibold mb-4">Deletar Canvas</h2>
+        <p class="text-gray-600 mb-6">
           Tem certeza que deseja deletar <strong>"{{ canvasToDelete.name }}"</strong>? Esta acao nao
           pode ser desfeita.
         </p>
 
-        <div class="modal__actions">
+        <div class="flex justify-end gap-2">
           <button
             type="button"
-            class="modal__btn modal__btn--secondary"
+            class="px-6 py-2 bg-gray-50 text-gray-600 border-none rounded-lg text-sm font-medium cursor-pointer transition-colors duration-fast hover:bg-gray-200"
             data-testid="cancel-delete-btn"
             @click="cancelDelete"
           >
@@ -241,7 +249,7 @@ const formatRelativeDate = (dateString: string): string => {
           </button>
           <button
             type="button"
-            class="modal__btn modal__btn--danger"
+            class="px-6 py-2 bg-danger text-white border-none rounded-lg text-sm font-medium cursor-pointer transition-colors duration-fast hover:bg-red-600"
             data-testid="confirm-delete-btn"
             @click="handleDelete"
           >
@@ -252,287 +260,3 @@ const formatRelativeDate = (dateString: string): string => {
     </div>
   </div>
 </template>
-
-<style scoped>
-.canvas-list {
-  min-height: 100vh;
-  background: var(--background);
-}
-
-.canvas-list__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-lg) var(--spacing-xl);
-  background: white;
-  border-bottom: 1px solid var(--note-border);
-}
-
-.canvas-list__brand {
-  display: flex;
-  flex-direction: column;
-}
-
-.canvas-list__title {
-  font-size: var(--text-xl);
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.canvas-list__subtitle {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-}
-
-.canvas-list__create-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-lg);
-  background: var(--tweet-border);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: var(--text-sm);
-  font-weight: 500;
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
-
-.canvas-list__create-btn:hover {
-  background: #4338ca;
-}
-
-.canvas-list__create-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
-.canvas-list__content {
-  padding: var(--spacing-xl);
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.canvas-list__empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: calc(var(--spacing-xl) * 2);
-  text-align: center;
-}
-
-.canvas-list__empty svg {
-  width: 64px;
-  height: 64px;
-  color: var(--text-muted);
-  margin-bottom: var(--spacing-lg);
-}
-
-.canvas-list__empty h2 {
-  font-size: var(--text-lg);
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-sm);
-}
-
-.canvas-list__empty p {
-  color: var(--text-secondary);
-  margin-bottom: var(--spacing-lg);
-}
-
-.canvas-list__empty-btn {
-  padding: var(--spacing-sm) var(--spacing-lg);
-  background: var(--tweet-border);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: var(--text-sm);
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.canvas-list__empty-btn:hover {
-  background: #4338ca;
-}
-
-.canvas-list__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--spacing-lg);
-}
-
-.canvas-card {
-  background: white;
-  border: 1px solid var(--note-border);
-  border-radius: var(--node-radius);
-  padding: var(--spacing-md);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.canvas-card:hover {
-  border-color: var(--tweet-border);
-  box-shadow: var(--tweet-shadow);
-}
-
-.canvas-card__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-sm);
-}
-
-.canvas-card__name {
-  font-size: var(--text-base);
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.canvas-card__delete {
-  padding: var(--spacing-xs);
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  opacity: 0;
-  transition: all var(--transition-fast);
-}
-
-.canvas-card:hover .canvas-card__delete {
-  opacity: 1;
-}
-
-.canvas-card__delete:hover {
-  color: var(--error);
-}
-
-.canvas-card__delete svg {
-  width: 16px;
-  height: 16px;
-}
-
-.canvas-card__meta {
-  display: flex;
-  gap: var(--spacing-md);
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  margin-bottom: var(--spacing-md);
-}
-
-.canvas-card__preview {
-  position: relative;
-  height: 80px;
-  background: var(--background);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.canvas-card__preview-node {
-  position: absolute;
-  width: 40px;
-  height: 20px;
-  border-radius: 4px;
-  opacity: 0.6;
-}
-
-.canvas-card__preview-node--tweet {
-  background: var(--tweet-border);
-}
-
-.canvas-card__preview-node--question {
-  background: var(--question-border);
-}
-
-.canvas-card__preview-node--note {
-  background: #d97706;
-}
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: var(--z-modal);
-}
-
-.modal {
-  background: white;
-  border-radius: var(--node-radius);
-  padding: var(--spacing-lg);
-  width: 100%;
-  max-width: 400px;
-  animation: fadeIn var(--transition-fast);
-}
-
-.modal__title {
-  font-size: var(--text-lg);
-  font-weight: 600;
-  margin-bottom: var(--spacing-md);
-}
-
-.modal__message {
-  color: var(--text-secondary);
-  margin-bottom: var(--spacing-lg);
-}
-
-.modal__input {
-  width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid var(--note-border);
-  border-radius: 8px;
-  font-size: var(--text-base);
-  margin-bottom: var(--spacing-lg);
-}
-
-.modal__input:focus {
-  outline: none;
-  border-color: var(--tweet-border);
-}
-
-.modal__actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--spacing-sm);
-}
-
-.modal__btn {
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border: none;
-  border-radius: 8px;
-  font-size: var(--text-sm);
-  font-weight: 500;
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
-
-.modal__btn--primary {
-  background: var(--tweet-border);
-  color: white;
-}
-
-.modal__btn--primary:hover {
-  background: #4338ca;
-}
-
-.modal__btn--secondary {
-  background: var(--background);
-  color: var(--text-secondary);
-}
-
-.modal__btn--secondary:hover {
-  background: var(--note-border);
-}
-
-.modal__btn--danger {
-  background: var(--error);
-  color: white;
-}
-
-.modal__btn--danger:hover {
-  background: #dc2626;
-}
-</style>
