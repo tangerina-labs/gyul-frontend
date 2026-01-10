@@ -1,0 +1,695 @@
+/* =============================================================================
+   GYUL - Global Styles
+   =============================================================================
+   Design System baseado em "Quiet UI + Strong Focus"
+   
+   Arquitetura de Tokens:
+   1. Core Tokens - valores primitivos (cores, espacamento, tipografia)
+   2. Semantic Tokens - intencao de uso (surfaces, text, borders)
+   3. Component Tokens - especificos (nodes, edges, handles)
+   
+   Principio: Componentes nunca usam valores diretos, apenas tokens.
+   ============================================================================= */
+
+/* =============================================================================
+   1. CORE TOKENS - Valores Primitivos
+   ============================================================================= */
+
+:root {
+  /* ---------------------------------------------------------------------------
+     1.1 COLOR PALETTE - Escala de cores base
+     --------------------------------------------------------------------------- */
+  
+  /* Neutros (Gray scale) */
+  --color-gray-0: #ffffff;
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  
+  /* Brand / Primary (Indigo) */
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  
+  /* Violet (Question accent) */
+  --color-violet-400: #a78bfa;
+  --color-violet-500: #8b5cf6;
+  --color-violet-600: #7c3aed;
+  
+  /* Amber (Note accent) */
+  --color-amber-50: #fffbeb;
+  --color-amber-100: #fef3c7;
+  --color-amber-600: #d97706;
+  --color-amber-700: #b45309;
+  --color-amber-800: #92400e;
+  
+  /* State Colors */
+  --color-success: #10b981;
+  --color-success-light: rgba(16, 185, 129, 0.1);
+  --color-warning: #f59e0b;
+  --color-warning-light: rgba(245, 158, 11, 0.1);
+  --color-danger: #ef4444;
+  --color-danger-light: rgba(239, 68, 68, 0.1);
+
+  /* ---------------------------------------------------------------------------
+     1.2 TYPOGRAPHY - Fontes e tamanhos
+     --------------------------------------------------------------------------- */
+  
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 
+               Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, Monaco, 'Courier New', 
+               monospace;
+  
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-md: 1rem;       /* 16px */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* ---------------------------------------------------------------------------
+     1.3 SPACING - Escala de espacamento
+     --------------------------------------------------------------------------- */
+  
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* ---------------------------------------------------------------------------
+     1.4 RADIUS - Bordas arredondadas
+     --------------------------------------------------------------------------- */
+  
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* ---------------------------------------------------------------------------
+     1.5 SHADOWS - Elevacao
+     --------------------------------------------------------------------------- */
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.15);
+
+  /* ---------------------------------------------------------------------------
+     1.6 TRANSITIONS - Duracao e easing
+     --------------------------------------------------------------------------- */
+  
+  --transition-fast: 120ms ease-out;
+  --transition-base: 180ms ease-out;
+  --transition-slow: 300ms ease-out;
+
+  /* ---------------------------------------------------------------------------
+     1.7 Z-INDEX - Camadas
+     --------------------------------------------------------------------------- */
+  
+  --z-base: 0;
+  --z-nodes: 1;
+  --z-edges: 0;
+  --z-controls: 10;
+  --z-menu: 100;
+  --z-modal: 1000;
+}
+
+/* =============================================================================
+   2. SEMANTIC TOKENS - Intencao de Uso
+   ============================================================================= */
+
+:root {
+  /* ---------------------------------------------------------------------------
+     2.1 SURFACES - Fundos e containers
+     --------------------------------------------------------------------------- */
+  
+  --surface-canvas: var(--color-gray-50);
+  --surface-node: var(--color-gray-0);
+  --surface-node-hover: var(--color-gray-100);
+  --surface-elevated: var(--color-gray-0);
+  --surface-muted: var(--color-gray-100);
+  
+  /* ---------------------------------------------------------------------------
+     2.2 TEXT - Cores de texto
+     --------------------------------------------------------------------------- */
+  
+  --text-primary: var(--color-gray-900);
+  --text-secondary: var(--color-gray-600);
+  --text-muted: var(--color-gray-400);
+  --text-inverse: var(--color-gray-0);
+  
+  /* ---------------------------------------------------------------------------
+     2.3 BORDERS - Bordas
+     --------------------------------------------------------------------------- */
+  
+  --border-subtle: var(--color-gray-200);
+  --border-default: var(--color-gray-300);
+  --border-strong: var(--color-gray-400);
+  
+  /* ---------------------------------------------------------------------------
+     2.4 ACCENTS - Cores de destaque
+     --------------------------------------------------------------------------- */
+  
+  --accent-primary: var(--color-brand-600);
+  --accent-primary-hover: var(--color-brand-700);
+  --accent-primary-light: var(--color-brand-50);
+  
+  /* ---------------------------------------------------------------------------
+     2.5 INTERACTIVE - Estados de interacao
+     --------------------------------------------------------------------------- */
+  
+  --focus-ring-color: var(--color-brand-500);
+  --focus-ring-width: 2px;
+  --selection-color: rgba(99, 102, 241, 0.15);
+}
+
+/* =============================================================================
+   3. COMPONENT TOKENS - Especificos
+   ============================================================================= */
+
+:root {
+  /* ---------------------------------------------------------------------------
+     3.1 NODE TOKENS - Base para todos os nodes
+     --------------------------------------------------------------------------- */
+  
+  --node-background: var(--surface-node);
+  --node-border-color: var(--border-subtle);
+  --node-border-width: 1px;
+  --node-border-radius: var(--radius-md);
+  --node-padding: var(--space-4);
+  --node-shadow: var(--shadow-sm);
+  
+  /* Node states */
+  --node-selected-border: var(--accent-primary);
+  --node-selected-shadow: 0 0 0 2px var(--selection-color);
+  --node-hover-shadow: var(--shadow-md);
+  
+  /* ---------------------------------------------------------------------------
+     3.2 ACCENT RAIL - Identificacao visual por tipo
+     
+     O accent rail e uma barra vertical na esquerda do card
+     que identifica o tipo do node sem poluir visualmente
+     --------------------------------------------------------------------------- */
+  
+  --accent-rail-width: 4px;
+  
+  /* Cores por tipo de node */
+  --accent-tweet: var(--color-brand-600);
+  --accent-question: var(--color-violet-400);
+  --accent-note: var(--color-amber-700);
+  
+  /* ---------------------------------------------------------------------------
+     3.3 EDGE TOKENS - Conexoes entre nodes
+     --------------------------------------------------------------------------- */
+  
+  --edge-color-default: var(--color-gray-300);
+  --edge-color-hover: var(--color-gray-400);
+  --edge-color-selected: var(--accent-primary);
+  --edge-width-default: 1.5px;
+  --edge-width-active: 2.5px;
+  
+  /* ---------------------------------------------------------------------------
+     3.4 HANDLE TOKENS - Pontos de conexao
+     --------------------------------------------------------------------------- */
+  
+  --handle-size: 12px;
+  --handle-bg: var(--color-gray-500);
+  --handle-border: var(--color-gray-0);
+  --handle-hover-bg: var(--accent-primary);
+  
+  /* ---------------------------------------------------------------------------
+     3.5 CANVAS TOKENS - Background e estrutura
+     --------------------------------------------------------------------------- */
+  
+  --canvas-background: var(--surface-canvas);
+  --canvas-dots: var(--color-gray-200);
+  --canvas-pattern-size: 20px;
+  
+  /* ---------------------------------------------------------------------------
+     3.6 LEGACY COMPATIBILITY - Tokens antigos para transicao
+     
+     Estes tokens serao removidos apos migracao completa.
+     Componentes devem usar os novos tokens semanticos.
+     --------------------------------------------------------------------------- */
+  
+  /* Tweet (deprecated - use accent-tweet) */
+  --tweet-border: var(--accent-tweet);
+  --tweet-bg: var(--surface-node);
+  --tweet-shadow: var(--shadow-md);
+  
+  /* Question (deprecated - use accent-question) */
+  --question-border: var(--accent-question);
+  --question-bg: var(--surface-node);
+  --question-prompt-bg: var(--surface-node);
+  --question-response-bg: var(--surface-muted);
+  --question-response-border: var(--color-success);
+  --question-shadow: var(--shadow-sm);
+  
+  /* Note (deprecated - use accent-note) */
+  --note-bg: var(--color-amber-50);
+  --note-border: var(--border-subtle);
+  --note-shadow: var(--shadow-sm);
+  
+  /* States (deprecated - use color-* directly) */
+  --loading: var(--color-warning);
+  --loading-bg: var(--color-warning-light);
+  --done: var(--color-success);
+  --done-bg: var(--color-success-light);
+  --error: var(--color-danger);
+  --error-bg: var(--color-danger-light);
+  --hover: var(--accent-primary);
+  --selected: var(--accent-primary);
+  
+  /* Structure (deprecated) */
+  --background: var(--surface-canvas);
+  --background-dots: var(--canvas-dots);
+  --background-pattern-size: var(--canvas-pattern-size);
+  --edge-default: var(--edge-color-default);
+  --edge-hover: var(--edge-color-hover);
+  --edge-selected: var(--edge-color-selected);
+  --edge-width: var(--edge-width-default);
+  
+  /* Typography (deprecated - use font-size-*) */
+  --text-xs: var(--font-size-xs);
+  --text-sm: var(--font-size-sm);
+  --text-base: var(--font-size-md);
+  --text-lg: var(--font-size-lg);
+  --text-xl: var(--font-size-xl);
+  
+  /* Spacing (deprecated - use space-*) */
+  --spacing-xs: var(--space-1);
+  --spacing-sm: var(--space-2);
+  --spacing-md: var(--space-4);
+  --spacing-lg: var(--space-6);
+  --spacing-xl: var(--space-8);
+  
+  /* Node structure (deprecated) */
+  --node-radius: var(--node-border-radius);
+}
+
+/* =============================================================================
+   RESET
+   ============================================================================= */
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+}
+
+#app {
+  width: 100%;
+  min-height: 100%;
+  overflow: auto;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-normal);
+  color: var(--text-primary);
+  background-color: var(--surface-canvas);
+}
+
+/* =============================================================================
+   ANIMATIONS
+   ============================================================================= */
+
+/* ---------------------------------------------------------------------------
+   Node Enter - Animacao de entrada suave
+   --------------------------------------------------------------------------- */
+@keyframes nodeEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.node-enter {
+  animation: nodeEnter var(--transition-base) ease-out;
+}
+
+/* ---------------------------------------------------------------------------
+   Node Exit - Animacao de saida
+   --------------------------------------------------------------------------- */
+@keyframes nodeExit {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+.node-exit {
+  animation: nodeExit var(--transition-fast) ease-in;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Node Delete Exit - Animacao especifica para delecao
+   
+   Diferente do nodeExit padrao, adiciona rotacao sutil para
+   indicar visualmente que o no esta sendo removido (nao apenas saindo).
+   --------------------------------------------------------------------------- */
+@keyframes nodeDeleteExit {
+  from {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.8) rotate(5deg);
+  }
+}
+
+.node-delete-exit {
+  animation: nodeDeleteExit 150ms ease-in forwards;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Loading Bar - Barra de progresso animada (substitui borderPulse)
+   --------------------------------------------------------------------------- */
+@keyframes loadingSlide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Spinner - Rotacao para loading indicators
+   --------------------------------------------------------------------------- */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* ---------------------------------------------------------------------------
+   Fade In - Fade suave para elementos
+   --------------------------------------------------------------------------- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fadeIn var(--transition-base) ease-out;
+}
+
+/* ---------------------------------------------------------------------------
+   Edge Flow - Animacao de edges destacadas
+   --------------------------------------------------------------------------- */
+@keyframes edgeFlow {
+  from {
+    stroke-dashoffset: 12;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* =============================================================================
+   UTILITY CLASSES
+   ============================================================================= */
+
+/* Truncate text with ellipsis */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Multi-line truncate */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Visually hidden but accessible */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* =============================================================================
+   VUE FLOW OVERRIDES
+   ============================================================================= */
+
+/* Background do Vue Flow */
+.vue-flow {
+  background-color: var(--canvas-background);
+}
+
+.vue-flow__background {
+  background-color: var(--canvas-background);
+}
+
+/* Edges */
+.vue-flow__edge-path {
+  stroke: var(--edge-color-default);
+  stroke-width: var(--edge-width-default);
+  transition: stroke var(--transition-fast);
+}
+
+.vue-flow__edge:hover .vue-flow__edge-path {
+  stroke: var(--edge-color-hover);
+}
+
+.vue-flow__edge.selected .vue-flow__edge-path {
+  stroke: var(--edge-color-selected);
+  stroke-width: var(--edge-width-active);
+}
+
+/* Branch highlight - Edges */
+.vue-flow__edge.edge-highlighted .vue-flow__edge-path {
+  stroke: var(--accent-primary);
+  stroke-width: var(--edge-width-active);
+  stroke-dasharray: 8, 4;
+  animation: edgeFlow 0.5s linear infinite;
+}
+
+.vue-flow__edge.edge-faded .vue-flow__edge-path {
+  opacity: 0.25;
+  transition: opacity var(--transition-fast);
+}
+
+/* Branch highlight - Nodes */
+.vue-flow__node.node-faded {
+  opacity: 0.4;
+  transition: opacity var(--transition-fast);
+}
+
+/* Handles */
+.vue-flow__handle {
+  width: var(--handle-size);
+  height: var(--handle-size);
+  background-color: var(--handle-bg);
+  border: 2px solid var(--handle-border);
+  border-radius: var(--radius-full);
+  transition: background-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.vue-flow__handle:hover {
+  background-color: var(--handle-hover-bg);
+  transform: scale(1.1);
+}
+
+/* Connection line while dragging */
+.vue-flow__connection-line {
+  stroke: var(--accent-primary);
+  stroke-width: 2px;
+  stroke-dasharray: 5, 5;
+}
+
+/* Selection box */
+.vue-flow__selection {
+  background: var(--selection-color);
+  border: 1px solid var(--accent-primary);
+  border-radius: var(--radius-sm);
+}
+
+/* Node animations */
+.vue-flow__node {
+  animation: nodeEnter var(--transition-base) ease-out;
+}
+
+.vue-flow__node.removing {
+  animation: nodeExit var(--transition-fast) ease-in forwards;
+  pointer-events: none;
+}
+
+/* =============================================================================
+   MICRO-INTERACTIONS
+   ============================================================================= */
+
+/* Focus rings acessiveis */
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Button feedback */
+button {
+  transition: transform var(--transition-fast), 
+              background var(--transition-fast),
+              box-shadow var(--transition-fast);
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Card interactions - Quiet hover */
+.canvas-card,
+.base-card {
+  transition: box-shadow var(--transition-fast),
+              border-color var(--transition-fast);
+}
+
+/* Selection color */
+::selection {
+  background: var(--selection-color);
+  color: var(--text-primary);
+}
+
+/* Link transitions */
+a {
+  transition: color var(--transition-fast),
+              opacity var(--transition-fast);
+}
+
+a:hover {
+  opacity: 0.8;
+}
+
+/* Input transitions */
+input,
+textarea {
+  transition: border-color var(--transition-fast),
+              box-shadow var(--transition-fast);
+}
+
+input:focus,
+textarea:focus {
+  border-color: var(--accent-primary);
+}
+
+/* =============================================================================
+   CANVAS CREATING MODE
+   ============================================================================= */
+
+/**
+ * SVG cursor with "+" icon
+ * Uses brand color for consistency
+ */
+.canvas-creating-mode,
+.canvas-creating-mode .vue-flow__pane {
+  cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="white" stroke="%234F46E5" stroke-width="2"/><line x1="12" y1="7" x2="12" y2="17" stroke="%234F46E5" stroke-width="2" stroke-linecap="round"/><line x1="7" y1="12" x2="17" y2="12" stroke="%234F46E5" stroke-width="2" stroke-linecap="round"/></svg>') 12 12, crosshair;
+}
+
+/**
+ * Overlay with subtle inset glow when in creating mode
+ */
+.canvas-view__overlay--creating {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: calc(var(--z-controls) - 1);
+  box-shadow: inset 0 0 60px var(--selection-color);
+  border: 2px solid transparent;
+  border-image: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.2) 0%,
+    rgba(99, 102, 241, 0.05) 50%,
+    rgba(99, 102, 241, 0.2) 100%
+  ) 1;
+  animation: createModeGlow 2s ease-in-out infinite;
+}
+
+@keyframes createModeGlow {
+  0%, 100% {
+    box-shadow: inset 0 0 60px var(--selection-color);
+  }
+  50% {
+    box-shadow: inset 0 0 80px rgba(99, 102, 241, 0.12);
+  }
+}
