@@ -175,7 +175,7 @@ const previewNodeColors: Record<string, string> = {
             <div
               v-for="(node, index) in canvas.nodes.slice(0, 3)"
               :key="node.id"
-              :class="['absolute w-10 h-5 rounded opacity-60', previewNodeColors[node.type] || 'bg-gray-400']"
+              :class="['absolute w-10 h-5 rounded opacity-60', (node.data?.type && previewNodeColors[node.data.type]) || 'bg-gray-400']"
               :style="{ left: `${20 + index * 30}%`, top: `${30 + index * 15}%` }"
             />
           </div>
