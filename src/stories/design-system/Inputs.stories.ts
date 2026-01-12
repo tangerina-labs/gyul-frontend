@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/vue3'
-import { h, defineComponent, ref } from 'vue'
+import { h, defineComponent } from 'vue'
 
 /**
  * Design System Form Inputs
@@ -12,9 +12,6 @@ import { h, defineComponent, ref } from 'vue'
 const InputsPage = defineComponent({
   name: 'InputsPage',
   setup() {
-    const checkboxChecked = ref(true)
-    const switchOn = ref(true)
-    const selectValue = ref('')
 
     return () => h('section', { class: 'p-8' }, [
       h('h2', { class: 'mb-8 text-xl font-medium text-foreground' }, 'Form Inputs'),
