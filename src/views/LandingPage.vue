@@ -58,7 +58,7 @@
 
         <!-- CTA Button -->
         <router-link 
-          to="/canvases" 
+          to="/canvases"
           class="inline-flex items-center gap-2 px-8 py-3 md:py-4 bg-primary text-primary-foreground font-medium rounded-lg transition-colors duration-base hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
         >
           Start exploring

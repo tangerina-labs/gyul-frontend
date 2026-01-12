@@ -37,7 +37,7 @@ test.describe('Navegacao', () => {
     await page.goto('/')
     await page.waitForLoadState('networkidle')
     // Landing page has CTA to enter app
-    await expect(page.getByRole('link', { name: 'Entrar no App' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Start exploring' })).toBeVisible()
   })
 
   test('rota desconhecida redireciona para /canvases', async ({ page }) => {

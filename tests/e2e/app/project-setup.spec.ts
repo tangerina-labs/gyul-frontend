@@ -15,7 +15,7 @@ test.describe('Project Setup', () => {
     await page.goto('/')
     await page.waitForLoadState('networkidle')
 
-    await expect(page.getByText('gyul')).toBeVisible()
+    await expect(page.getByText('Transform fleeting tweets into lasting understanding')).toBeVisible()
   })
 
   test('should show landing page at root', async ({ page }) => {
@@ -23,7 +23,7 @@ test.describe('Project Setup', () => {
     await page.waitForLoadState('networkidle')
     
     // Landing page has CTA to enter app
-    await expect(page.getByRole('link', { name: 'Entrar no App' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Start exploring' })).toBeVisible()
   })
 
   test('should redirect unknown routes to /canvases', async ({ page }) => {
