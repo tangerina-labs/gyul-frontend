@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from "vue";
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import {
   VueFlow,
   useVueFlow,
-  applyNodeChanges,
   applyEdgeChanges,
   ConnectionMode
 } from "@vue-flow/core";
-import type { NodeChange, EdgeChange } from "@vue-flow/core";
+import type { EdgeChange, NodeDragEvent } from "@vue-flow/core";
 import { Background } from "@vue-flow/background";
 import "@vue-flow/core/dist/style.css";
 import "@vue-flow/core/dist/theme-default.css";
@@ -59,8 +58,13 @@ function createEmptyCanvasState(): CanvasState {
   };
 }
 
-const nodes = ref<CustomNode[]>([...initialCanvas.value.nodes]);
 const edges = ref<CustomEdge[]>([...initialCanvas.value.edges]);
+
+/**
+ * Local nodes ref for controlled mode.
+ * This ensures proper synchronization between Vue reactivity and VueFlow's drag handlers.
+ */
+const localNodes = ref<CustomNode[]>([...initialCanvas.value.nodes]);
 
 const flowId = `canvas-${canvasId.value}`;
 const {
@@ -77,6 +81,11 @@ const {
   project,
 } = useVueFlow({ id: flowId });
 
+/**
+ * Alias for compatibility with existing code that uses 'nodes'.
+ */
+const nodes = localNodes;
+
 const { isCreating, enterCreateMode, exitCreateMode } = useCanvasMode();
 
 function getNodeDimensions(
@@ -92,6 +101,11 @@ function getNodeDimensions(
   };
 }
 
+/**
+ * Watch for changes to persist canvas state.
+ * With v-model:nodes, VueFlow directly updates the nodes ref when dragging,
+ * so this watch captures all position changes automatically.
+ */
 watch(
   [nodes, edges],
   () => {
@@ -157,22 +171,45 @@ const edgesWithHighlight = computed(() => {
   }));
 });
 
-const nodesWithFade = computed(() => {
-  const { nodeIds } = highlightedBranch.value;
-  const hasHighlight = nodeIds.size > 0;
-
-  return nodes.value.map((node) => ({
-    ...node,
-    class: hasHighlight && !nodeIds.has(node.id) ? "node-faded" : "",
-  }));
-});
-
-function onNodesChange(changes: NodeChange[]) {
-  nodes.value = applyNodeChanges(changes, nodes.value as any) as CustomNode[];
-}
+/**
+ * Watch for node highlighting and update node classes.
+ * We modify the class property directly on VueFlow's internal nodes
+ * to avoid creating new object references that could break drag state.
+ */
+watch(
+  highlightedBranch,
+  ({ nodeIds }) => {
+    const hasHighlight = nodeIds.size > 0;
+    nodes.value.forEach((node) => {
+      const shouldFade = hasHighlight && !nodeIds.has(node.id);
+      if (node.class !== (shouldFade ? "node-faded" : "")) {
+        node.class = shouldFade ? "node-faded" : "";
+      }
+    });
+  },
+  { immediate: true }
+);
 
 function onEdgesChange(changes: EdgeChange[]) {
   edges.value = applyEdgeChanges(changes, edges.value as any) as CustomEdge[];
+}
+
+/**
+ * Handle node drag stop to explicitly persist position changes.
+ * VueFlow updates its internal nodes automatically during drag,
+ * but the deep watch might not detect mutations on existing objects.
+ * We manually save after drag to ensure persistence.
+ */
+function onNodeDragStop(_event: NodeDragEvent) {
+  // VueFlow has already updated node positions in its internal state
+  // Manually save to ensure persistence since watch might not detect mutations
+  const cleanNodes = nodes.value.map((n) =>
+    cleanNodeForStorage(n as unknown as CustomNode)
+  );
+  const cleanEdges = edges.value.map((e) =>
+    cleanEdgeForStorage(e as unknown as CustomEdge)
+  );
+  saveCanvasState(canvasId.value, cleanNodes, cleanEdges);
 }
 
 import { fetchTweet } from "@/services/tweetService";
@@ -385,6 +422,34 @@ function deleteNode(nodeId: string): boolean {
   return true;
 }
 
+/**
+ * Custom keyboard handler for node deletion.
+ * VueFlow's default delete behavior doesn't check for children,
+ * so we disable it and implement our own that respects the rule.
+ */
+function handleKeyboardDelete(event: KeyboardEvent) {
+  if (event.key !== "Delete" && event.key !== "Backspace") return;
+
+  // Don't intercept if user is typing in an input/textarea
+  const target = event.target as HTMLElement;
+  if (
+    target.tagName === "INPUT" ||
+    target.tagName === "TEXTAREA" ||
+    target.isContentEditable
+  ) {
+    return;
+  }
+
+  // Find selected nodes and try to delete them
+  const selectedNodes = nodes.value.filter(
+    (n) => (n as unknown as { selected?: boolean }).selected
+  );
+
+  for (const node of selectedNodes) {
+    deleteNode(node.id);
+  }
+}
+
 const showNodeTypeMenu = ref(false);
 const menuPosition = ref({ x: 0, y: 0 });
 const pendingNodePosition = ref<{ x: number; y: number } | null>(null);
@@ -562,15 +627,23 @@ const defaultEdgeOptions = {
 };
 
 onMounted(async () => {
+  // Wait for VueFlow to initialize with the nodes passed via v-model
   await nextTick();
 
-  if (nodes.value.length > 0) {
+  if (localNodes.value.length > 0) {
     setTimeout(() => {
       vueFlowFitView({ padding: 0.2, duration: PAN_DURATION });
     }, 100);
   } else {
     setViewport({ x: 0, y: 0, zoom: INITIAL_ZOOM_EMPTY });
   }
+
+  // Register custom keyboard handler for deletion
+  window.addEventListener("keydown", handleKeyboardDelete);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", handleKeyboardDelete);
 });
 </script>
 
@@ -608,7 +681,7 @@ onMounted(async () => {
     >
       <VueFlow
         :id="flowId"
-        :nodes="nodesWithFade"
+        v-model:nodes="localNodes"
         :edges="edgesWithHighlight"
         :default-edge-options="defaultEdgeOptions"
         :pan-on-drag="true"
@@ -620,10 +693,11 @@ onMounted(async () => {
         :nodes-connectable="false"
         :edges-connectable="false"
         :connection-mode="ConnectionMode.Loose"
+        :delete-key-code="null"
         class="w-full h-full"
         data-testid="vue-flow"
-        @nodes-change="onNodesChange"
         @edges-change="onEdgesChange"
+        @node-drag-stop="onNodeDragStop"
         @pane-click="handlePaneClick"
       >
         <Background :gap="20" :size="1" />

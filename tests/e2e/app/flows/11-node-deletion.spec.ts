@@ -203,6 +203,83 @@ test.describe('Delecao de Nos', () => {
     })
   })
 
+  test.describe('Delecao via Teclado (Delete Key)', () => {
+    test('tecla Delete remove no folha selecionado', async ({ page }) => {
+      await addNodeViaClick(page, 'Note')
+      await writeNote(page, 'Nota para deletar via tecla')
+
+      // Click to select the node
+      await page.getByText('Nota para deletar via tecla').click()
+
+      // Press Delete key
+      await page.keyboard.press('Delete')
+
+      await expectCanvasEmpty(page)
+    })
+
+    test('tecla Delete NAO remove no pai com filhos', async ({ page }) => {
+      await addNodeViaClick(page, 'Note')
+      await writeNote(page, 'Pai protegido teclado')
+
+      await page.getByTestId('note-add-child-btn').click({ force: true })
+      await page.getByRole('menuitem', { name: /Note/i }).click()
+      await fitCanvasView(page)
+      await writeNote(page, 'Filho protetor teclado')
+
+      // Select the parent node
+      await page.getByText('Pai protegido teclado').click()
+
+      // Press Delete key - should NOT delete the parent
+      await page.keyboard.press('Delete')
+
+      // Both nodes should still exist
+      await expect(page.getByText('Pai protegido teclado')).toBeVisible()
+      await expect(page.getByText('Filho protetor teclado')).toBeVisible()
+    })
+
+    test('tecla Backspace NAO remove no pai com filhos', async ({ page }) => {
+      await addNodeViaClick(page, 'Note')
+      await writeNote(page, 'Pai protegido backspace')
+
+      await page.getByTestId('note-add-child-btn').click({ force: true })
+      await page.getByRole('menuitem', { name: /Note/i }).click()
+      await fitCanvasView(page)
+      await writeNote(page, 'Filho protetor backspace')
+
+      // Select the parent node
+      await page.getByText('Pai protegido backspace').click()
+
+      // Press Backspace key - should NOT delete the parent
+      await page.keyboard.press('Backspace')
+
+      // Both nodes should still exist
+      await expect(page.getByText('Pai protegido backspace')).toBeVisible()
+      await expect(page.getByText('Filho protetor backspace')).toBeVisible()
+    })
+
+    test('apos deletar filho via teclado, pai pode ser deletado via teclado', async ({ page }) => {
+      await addNodeViaClick(page, 'Note')
+      await writeNote(page, 'Pai cadeia teclado')
+
+      await page.getByTestId('note-add-child-btn').click({ force: true })
+      await page.getByRole('menuitem', { name: /Note/i }).click()
+      await fitCanvasView(page)
+      await writeNote(page, 'Filho a remover teclado')
+
+      // Select and delete child via keyboard
+      await page.getByText('Filho a remover teclado').click()
+      await page.keyboard.press('Delete')
+
+      await expect(page.getByText('Filho a remover teclado')).not.toBeVisible()
+
+      // Now parent can be deleted via keyboard
+      await page.getByText('Pai cadeia teclado').click()
+      await page.keyboard.press('Delete')
+
+      await expectCanvasEmpty(page)
+    })
+  })
+
   test.describe('Diferentes Tipos de Nos', () => {
     test('tweet pai com question filho tem delete desabilitado', async ({ page }) => {
       await addNodeViaClick(page, 'Tweet')

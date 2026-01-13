@@ -75,18 +75,39 @@ export function updateCanvas(
   canvasId: string,
   updates: Partial<CanvasState>
 ): AppState {
-  const canvases = state.canvases.map((canvas) => {
-    if (canvas.id === canvasId) {
-      return {
-        ...canvas,
-        ...updates,
-        updatedAt: new Date().toISOString()
+  const existingCanvas = state.canvases.find((c) => c.id === canvasId)
+  
+  if (existingCanvas) {
+    // Update existing canvas
+    const canvases = state.canvases.map((canvas) => {
+      if (canvas.id === canvasId) {
+        return {
+          ...canvas,
+          ...updates,
+          updatedAt: new Date().toISOString()
+        }
       }
+      return canvas
+    })
+    return { ...state, canvases }
+  } else {
+    // Create new canvas if it doesn't exist
+    // This handles the case when user navigates directly to a canvas URL
+    const newCanvas: CanvasState = {
+      id: canvasId,
+      name: updates.name || 'Novo Canvas',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      nodes: updates.nodes || [],
+      edges: updates.edges || [],
+      viewport: updates.viewport || { x: 0, y: 0, zoom: 1 }
     }
-    return canvas
-  })
-
-  return { ...state, canvases }
+    return { 
+      ...state, 
+      canvases: [...state.canvases, newCanvas],
+      activeCanvasId: canvasId
+    }
+  }
 }
 
 export function getCanvas(
