@@ -1,0 +1,127 @@
+name: Unit Tests
+
+on:
+  workflow_call:
+    inputs:
+      artifact-prefix:
+        description: 'Prefix for artifact names to avoid collisions'
+        required: false
+        default: ''
+        type: string
+      upload-codecov:
+        description: 'Whether to upload coverage to Codecov'
+        required: false
+        default: false
+        type: boolean
+    secrets:
+      CODECOV_TOKEN:
+        required: false
+    outputs:
+      result:
+        description: 'Whether unit tests passed (success/failure/cached)'
+        value: ${{ jobs.status.outputs.result }}
+
+jobs:
+  check-cache:
+    runs-on: ubuntu-latest
+    outputs:
+      cache-hit: ${{ steps.cache-check.outputs.cache-hit }}
+    steps:
+      - name: Check if unit tests already passed for this commit
+        id: cache-check
+        uses: actions/cache/restore@v4
+        with:
+          path: .unit-passed-marker
+          key: unit-passed-${{ github.sha }}
+          lookup-only: true
+
+      - name: Report cache status
+        run: |
+          if [[ "${{ steps.cache-check.outputs.cache-hit }}" == "true" ]]; then
+            echo "::notice::Unit tests already passed for this commit (SHA: ${{ github.sha }}). Skipping tests."
+          else
+            echo "::notice::No cached results found. Running unit tests."
+          fi
+
+  unit-tests:
+    needs: check-cache
+    if: needs.check-cache.outputs.cache-hit != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run unit tests with coverage
+        run: pnpm vitest run --coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact-prefix }}coverage-report
+          path: coverage/
+          retention-days: 30
+
+      - name: Upload coverage to Codecov
+        if: inputs.upload-codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  save-cache:
+    needs: [check-cache, unit-tests]
+    if: needs.check-cache.outputs.cache-hit != 'true' && needs.unit-tests.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create cache marker
+        run: |
+          mkdir -p .unit-passed-marker
+          echo "${{ github.sha }}" > .unit-passed-marker/sha
+          echo "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > .unit-passed-marker/timestamp
+
+      - name: Save unit tests passed marker
+        uses: actions/cache/save@v4
+        with:
+          path: .unit-passed-marker
+          key: unit-passed-${{ github.sha }}
+
+  status:
+    needs: [check-cache, unit-tests, save-cache]
+    if: always()
+    runs-on: ubuntu-latest
+    outputs:
+      result: ${{ steps.determine-result.outputs.result }}
+    steps:
+      - name: Determine result
+        id: determine-result
+        run: |
+          if [[ "${{ needs.check-cache.outputs.cache-hit }}" == "true" ]]; then
+            echo "result=cached" >> $GITHUB_OUTPUT
+            echo "::notice::Unit tests PASSED (cached from previous run)"
+          elif [[ "${{ needs.unit-tests.result }}" == "success" ]]; then
+            echo "result=success" >> $GITHUB_OUTPUT
+            echo "::notice::Unit tests PASSED"
+          elif [[ "${{ needs.unit-tests.result }}" == "skipped" ]]; then
+            echo "result=cached" >> $GITHUB_OUTPUT
+            echo "::notice::Unit tests PASSED (cached)"
+          else
+            echo "result=failure" >> $GITHUB_OUTPUT
+            echo "::error::Unit tests FAILED"
+            exit 1
+          fi
