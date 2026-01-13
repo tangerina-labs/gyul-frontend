@@ -62,7 +62,6 @@ test.describe('Workflow de Anotacoes', () => {
     await page.keyboard.press('Shift+Enter')
     await page.keyboard.type('Linha 2')
 
-    // Textarea should still be active (not finalized)
     await expect(page.getByPlaceholder(/anotacao/i)).toBeVisible()
 
     await page.keyboard.press('Enter')
@@ -99,7 +98,6 @@ test.describe('Workflow de Anotacoes', () => {
     await expect(page.getByText('Nota 1')).toBeVisible()
     await expect(page.getByPlaceholder(/anotacao/i)).not.toBeVisible()
 
-    // Position far enough from first (notes are ~300px wide)
     await addNodeViaClick(page, 'Note', { x: 550, y: 150 })
     await page.getByPlaceholder(/anotacao/i).fill('Nota 2')
     await page.keyboard.press('Enter')

@@ -41,7 +41,6 @@ test.describe('Exploracao de Tweet', () => {
     await page.getByPlaceholder(/twitter\.com|URL/i).fill('https://twitter.com/user/status/999')
     await page.getByRole('button', { name: 'Carregar' }).click()
 
-    // Loading state may be too fast with delay=0
     await expect(page.getByTestId('tweet-author-handle')).toBeVisible({ timeout: 10000 })
   })
 
@@ -107,7 +106,6 @@ test.describe('Exploracao de Tweet', () => {
 
     await expect(page.getByTestId('question-response-content')).toBeVisible()
 
-    // Toggle only appears if response is long enough
     const toggle = page.getByTestId('expandable-text-toggle')
     const isToggleVisible = await toggle.isVisible().catch(() => false)
 

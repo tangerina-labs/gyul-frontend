@@ -32,7 +32,6 @@ test.describe('Criacao Explicita de Fluxos', () => {
     const canvas = page.locator('.vue-flow__pane')
     await canvas.click({ position: { x: 300, y: 300 } })
 
-    // Mode deactivates immediately after click
     await expect(page.getByTestId('canvas-creating-overlay')).not.toBeVisible()
     await expect(page.getByTestId('toolbox-new-flow')).not.toHaveAttribute('data-active', 'true')
 
@@ -64,7 +63,6 @@ test.describe('Criacao Explicita de Fluxos', () => {
     const canvas = page.locator('.vue-flow__pane')
     await canvas.click({ position: { x: 300, y: 300 } })
 
-    // Mode deactivates before menu interaction
     await expect(page.getByTestId('canvas-creating-overlay')).not.toBeVisible()
     await expect(page.getByTestId('toolbox-new-flow')).not.toHaveAttribute('data-active', 'true')
 

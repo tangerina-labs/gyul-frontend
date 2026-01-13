@@ -87,86 +87,71 @@ test.describe('Persistencia de Dados', () => {
   })
 
   test('posicao do no persiste apos drag e reload', async ({ page }) => {
-    // 1. Create canvas with parent and child node
     await createCanvasViaUI(page, 'Test Position Persistence')
     await addNodeViaClick(page, 'Note')
     await writeNote(page, 'Parent Note')
 
-    // Add child to ensure complete scenario
     await page.getByTestId('note-add-child-btn').click({ force: true })
     await page.getByRole('menuitem', { name: /Note/i }).click()
     await writeNote(page, 'Child Note')
     await fitCanvasView(page)
 
-    // 2. Refresh the page
     await page.reload()
     await page.waitForLoadState('networkidle')
     await fitCanvasView(page)
 
-    // 3. Capture initial position of parent node from localStorage
     const initialStorageData = await page.evaluate(() => {
       return localStorage.getItem('gyul-state')
     })
     const initialParsed = JSON.parse(initialStorageData!)
     const initialNodePosition = initialParsed.canvases[0].nodes[0].position
 
-    // 4. Find the parent node and capture initial transform
     const parentNode = page.locator('.vue-flow__node').first()
     await parentNode.waitFor({ state: 'visible' })
-    
-    // Get initial transform from style attribute
+
     const initialTransform = await parentNode.evaluate((el) => {
       return window.getComputedStyle(el).transform
     })
-    
-    // Get node position for drag
+
     const box = await parentNode.boundingBox()
     expect(box).not.toBeNull()
-    
-    // Simulate manual drag: click on node center, hold, move, release
+
     const startX = box!.x + box!.width / 2
     const startY = box!.y + box!.height / 2
     const endX = startX + 150
     const endY = startY + 150
-    
+
     await page.mouse.move(startX, startY)
     await page.mouse.down()
     await page.mouse.move(endX, endY, { steps: 20 })
     await page.mouse.up()
 
-    // 5. Verify transform changed (confirms drag worked visually)
     const afterDragTransform = await parentNode.evaluate((el) => {
       return window.getComputedStyle(el).transform
     })
     expect(afterDragTransform).not.toBe(initialTransform)
 
-    // 6. Click outside the node to deselect and trigger save
     await page.locator('.vue-flow__pane').click({ position: { x: 10, y: 10 } })
     await page.waitForTimeout(500)
 
-    // 7. Verify position changed in localStorage
     const afterDragStorageData = await page.evaluate(() => {
       return localStorage.getItem('gyul-state')
     })
     const afterDragParsed = JSON.parse(afterDragStorageData!)
     const afterDragNodePosition = afterDragParsed.canvases[0].nodes[0].position
 
-    // Position should have changed after drag
     expect(afterDragNodePosition.x).not.toBeCloseTo(initialNodePosition.x, 0)
     expect(afterDragNodePosition.y).not.toBeCloseTo(initialNodePosition.y, 0)
 
-    // 8. Second reload to verify persistence
     await page.reload()
     await page.waitForLoadState('networkidle')
 
-    // 9. Verify the new position was maintained
     const finalStorageData = await page.evaluate(() => {
       return localStorage.getItem('gyul-state')
     })
     const finalParsed = JSON.parse(finalStorageData!)
     const finalNodePosition = finalParsed.canvases[0].nodes[0].position
 
-    // Final position should match the position after drag
     expect(finalNodePosition.x).toBeCloseTo(afterDragNodePosition.x, 0)
     expect(finalNodePosition.y).toBeCloseTo(afterDragNodePosition.y, 0)
   })

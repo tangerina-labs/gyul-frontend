@@ -35,7 +35,6 @@ test.describe('Multiplas Branches', () => {
     await addNodeViaClick(page, 'Note', { x: 600, y: 200 })
     await writeNote(page, 'Nota em branch separada')
 
-    // Use force to avoid intercept by other node's footer
     const tweetNode = page.locator('.vue-flow__node-tweet').first()
     await tweetNode.click({ force: true })
 
@@ -53,7 +52,6 @@ test.describe('Multiplas Branches', () => {
     await tweetNode.click({ force: true })
     await page.waitForTimeout(200)
 
-    // Single click on canvas does NOT open menu with new behavior
     const canvas = page.locator('.vue-flow__pane')
     await canvas.click({ position: { x: 400, y: 400 } })
 

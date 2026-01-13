@@ -50,7 +50,6 @@ test.describe('Branch Highlight', () => {
     await expect(highlightedEdges).toHaveCount(2)
 
     const edgePath = highlightedEdges.first().locator('.vue-flow__edge-path')
-    // Brand color: teal-500 (#14b8a6 = rgb(20, 184, 166))
     await expect(edgePath).toHaveCSS('stroke', 'rgb(20, 184, 166)')
 
     const fadedEdges = page.locator('.vue-flow__edge.edge-faded')
@@ -177,14 +176,11 @@ test.describe('Branch Highlight', () => {
     const highlightedEdges = page.locator('.vue-flow__edge.edge-highlighted')
     await expect(highlightedEdges).toHaveCount(2)
 
-    // All nodes are in same linear branch, none should be faded
     const fadedNodes = page.locator('.vue-flow__node.node-faded')
     await expect(fadedNodes).toHaveCount(0)
   })
 
   test('clicar em no root NAO ativa highlight', async ({ page }) => {
-    // Root nodes don't activate highlight since they have no ancestors to show
-
     await addNodeViaClick(page, 'Tweet', { x: 200, y: 200 })
     await loadTweet(page, 'https://twitter.com/user/status/666')
 

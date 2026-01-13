@@ -35,7 +35,6 @@ test.describe('Primeiro Uso', () => {
     await page.getByRole('button', { name: 'Criar primeiro canvas' }).click()
     await expect(page.getByRole('heading', { name: 'Novo Canvas' })).toBeVisible()
 
-    // Escape handler is bound to input element
     const input = page.getByPlaceholder('Nome do canvas')
     await input.focus()
     await page.keyboard.press('Escape')

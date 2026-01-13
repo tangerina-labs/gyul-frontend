@@ -36,7 +36,6 @@ test.describe('Navegacao', () => {
   test('rota raiz mostra landing page', async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('networkidle')
-    // Landing page has CTA to enter app
     await expect(page.getByRole('link', { name: 'Start exploring' })).toBeVisible()
   })
 

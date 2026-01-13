@@ -21,8 +21,7 @@ test.describe('Project Setup', () => {
   test('should show landing page at root', async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('networkidle')
-    
-    // Landing page has CTA to enter app
+
     await expect(page.getByRole('link', { name: 'Start exploring' })).toBeVisible()
   })
 

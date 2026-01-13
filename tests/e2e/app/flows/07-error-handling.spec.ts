@@ -83,17 +83,14 @@ test.describe('Tratamento de Erros', () => {
     await page.getByPlaceholder(/anotacao/i).fill('Teste')
     await page.keyboard.press('Enter')
 
-    // Use testid to avoid matching canvas title "Testes de Erro"
     await expect(page.getByTestId('note-content')).toContainText('Teste')
     await expect(page.getByPlaceholder(/anotacao/i)).not.toBeVisible()
 
-    // Position far from note to avoid overlap
     await addNodeViaClick(page, 'Tweet', { x: 550, y: 150 })
     await page.getByPlaceholder(/twitter\.com|URL/i).last().fill('https://twitter.com/user/status/999')
     await page.getByRole('button', { name: 'Carregar' }).last().click()
     await expect(page.getByTestId('tweet-author-handle')).toBeVisible({ timeout: 10000 })
 
-    // Filter non-critical errors (favicon, 404 resources)
     const criticalErrors = consoleErrors.filter(
       (error) =>
         !error.includes('favicon') && !error.includes('404') && !error.includes('network')
@@ -109,7 +106,6 @@ test.describe('Tratamento de Erros', () => {
 
     await page.getByRole('button', { name: 'Carregar' }).click()
 
-    // With delay=0 loading may be too fast, just verify it eventually loads
     await expect(page.getByText(/@\w+/)).toBeVisible({ timeout: 10000 })
   })
 
@@ -148,7 +144,6 @@ test.describe('Tratamento de Erros', () => {
     await canvas.click({ position: { x: 300, y: 300 } })
     await expect(page.getByTestId('node-type-menu')).toBeVisible()
 
-    // Single click on empty area closes menu (does not open new menu)
     await canvas.click({ position: { x: 100, y: 100 } })
 
     await expect(page.getByTestId('node-type-menu')).not.toBeVisible()
