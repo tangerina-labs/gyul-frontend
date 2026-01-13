@@ -26,6 +26,7 @@ import {
   INITIAL_ZOOM_EMPTY,
   PAN_DURATION,
 } from "@/composables/useNodePositioning";
+import { getAnimationDuration } from "@/utils/timing";
 
 import TweetNode from "@/components/nodes/TweetNode.vue";
 import QuestionNode from "@/components/nodes/QuestionNode.vue";
@@ -510,7 +511,7 @@ const handleNodeTypeSelect = async (type: NodeType) => {
         zoom: currentZoom,
         duration: PAN_DURATION,
       });
-    }, 50);
+    }, getAnimationDuration('CENTER_DELAY'));
   }
   closeMenu();
 };
@@ -633,7 +634,7 @@ onMounted(async () => {
   if (localNodes.value.length > 0) {
     setTimeout(() => {
       vueFlowFitView({ padding: 0.2, duration: PAN_DURATION });
-    }, 100);
+    }, getAnimationDuration('FIT_VIEW_DELAY'));
   } else {
     setViewport({ x: 0, y: 0, zoom: INITIAL_ZOOM_EMPTY });
   }

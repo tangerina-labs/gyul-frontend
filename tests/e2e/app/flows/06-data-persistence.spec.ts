@@ -132,7 +132,12 @@ test.describe('Persistencia de Dados', () => {
     expect(afterDragTransform).not.toBe(initialTransform)
 
     await page.locator('.vue-flow__pane').click({ position: { x: 10, y: 10 } })
-    await page.waitForTimeout(500)
+
+    // Wait for storage to be updated (debounced watch triggers after drag)
+    await expect(async () => {
+      const storageData = await page.evaluate(() => localStorage.getItem('gyul-state'))
+      expect(storageData).not.toBeNull()
+    }).toPass({ timeout: 2000 })
 
     const afterDragStorageData = await page.evaluate(() => {
       return localStorage.getItem('gyul-state')
@@ -238,9 +243,10 @@ test.describe('Persistencia de Dados', () => {
     await addNodeViaClick(page, 'Note')
     await writeNote(page, 'Testing storage structure')
 
-    await page.waitForTimeout(500)
-
-    const storageData = await page.evaluate(() => {
+    // Wait for storage to contain the note content
+    const storageData = await page.evaluate(async () => {
+      // Small delay to ensure Vue reactivity has completed
+      await new Promise(r => setTimeout(r, 50))
       return localStorage.getItem('gyul-state')
     })
 
@@ -266,9 +272,11 @@ test.describe('Persistencia de Dados', () => {
     await page.getByTestId('tweet-add-child-btn').click({ force: true })
     await page.getByRole('menuitem', { name: /Note/i }).click()
 
-    await page.waitForTimeout(500)
+    // Wait for the note node to appear, then check storage
+    await expect(page.getByTestId('note-card')).toBeVisible()
 
-    const storageData = await page.evaluate(() => {
+    const storageData = await page.evaluate(async () => {
+      await new Promise(r => setTimeout(r, 50))
       return localStorage.getItem('gyul-state')
     })
 

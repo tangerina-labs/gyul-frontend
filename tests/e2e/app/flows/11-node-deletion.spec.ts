@@ -88,6 +88,7 @@ test.describe('Delecao de Nos', () => {
       await addNodeViaClick(page, 'Note')
       await writeNote(page, 'Nota pai')
 
+      await fitCanvasView(page)
       await page.getByTestId('note-add-child-btn').click({ force: true })
       await page.getByRole('menuitem', { name: /Note/i }).click()
       await fitCanvasView(page)
@@ -137,6 +138,7 @@ test.describe('Delecao de Nos', () => {
       await addNodeViaClick(page, 'Note')
       await writeNote(page, 'Pai protegido')
 
+      await fitCanvasView(page)
       await page.getByTestId('note-add-child-btn').click({ force: true })
       await page.getByRole('menuitem', { name: /Note/i }).click()
       await fitCanvasView(page)
@@ -178,6 +180,7 @@ test.describe('Delecao de Nos', () => {
       await addNodeViaClick(page, 'Note')
       await writeNote(page, 'Pai multi')
 
+      await fitCanvasView(page)
       await page.getByTestId('note-add-child-btn').first().click({ force: true })
       await page.getByRole('menuitem', { name: /Note/i }).click()
       await fitCanvasView(page)
@@ -218,6 +221,7 @@ test.describe('Delecao de Nos', () => {
       await addNodeViaClick(page, 'Note')
       await writeNote(page, 'Pai protegido teclado')
 
+      await fitCanvasView(page)
       await page.getByTestId('note-add-child-btn').click({ force: true })
       await page.getByRole('menuitem', { name: /Note/i }).click()
       await fitCanvasView(page)
@@ -234,6 +238,7 @@ test.describe('Delecao de Nos', () => {
       await addNodeViaClick(page, 'Note')
       await writeNote(page, 'Pai protegido backspace')
 
+      await fitCanvasView(page)
       await page.getByTestId('note-add-child-btn').click({ force: true })
       await page.getByRole('menuitem', { name: /Note/i }).click()
       await fitCanvasView(page)

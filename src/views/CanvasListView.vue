@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStorage } from '@/composables/useStorage'
+import { getAnimationDuration } from '@/utils/timing'
 import type { CanvasState } from '@/types'
 
 const router = useRouter()
@@ -23,7 +24,7 @@ const openCreateModal = () => {
   showCreateModal.value = true
   setTimeout(() => {
     createInputRef.value?.focus()
-  }, 100)
+  }, getAnimationDuration('FOCUS_DELAY'))
 }
 
 const handleCreate = () => {

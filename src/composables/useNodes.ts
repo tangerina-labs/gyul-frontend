@@ -1,6 +1,7 @@
 import { useVueFlow } from '@vue-flow/core'
 import { fetchTweet } from '@/services/tweetService'
 import { generateAnswer } from '@/services/aiService'
+import { getAnimationDuration } from '@/utils/timing'
 import type {
   CustomNode,
   CustomNodeData,
@@ -184,7 +185,7 @@ export function useNodes() {
 
       setTimeout(() => {
         removeNodes([nodeId])
-      }, 150)
+      }, getAnimationDuration('NODE_REMOVE'))
     } else {
       removeNodes([nodeId])
     }

@@ -28,6 +28,7 @@ test.describe('Workflow de Anotacoes', () => {
     await expect(page.getByText('Ideias sobre produtividade')).toBeVisible()
     await expect(page.getByPlaceholder(/anotacao/i)).not.toBeVisible()
 
+    await fitCanvasView(page)
     await page.getByTestId('note-add-child-btn').click({ force: true })
     await page.getByRole('menuitem', { name: /Question/i }).click()
     await fitCanvasView(page)

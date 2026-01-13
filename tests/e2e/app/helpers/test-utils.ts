@@ -63,10 +63,14 @@ type NodeTypeName = 'Tweet' | 'Question' | 'Note'
 /**
  * Fits all nodes in the canvas view.
  * Use this after creating multiple nodes to ensure they're all visible.
+ * 
+ * Note: A small delay is needed to allow the fit animation to complete.
+ * In test environment, animations are reduced but Vue still needs time to update.
  */
 export async function fitCanvasView(page: Page): Promise<void> {
   await page.getByTestId('controls-fit-view').click()
-  await page.waitForTimeout(300)
+  // Wait for the fit animation to settle - needed even in test env for Vue reactivity
+  await page.waitForTimeout(100)
 }
 
 /**
@@ -91,7 +95,8 @@ export async function openNodeMenu(
 
   await page.getByTestId('toolbox-new-flow').click()
 
-  await page.waitForTimeout(100)
+  // Wait for create mode overlay to appear
+  await expect(page.getByTestId('canvas-creating-overlay')).toBeVisible()
 
   await page.evaluate((pos) => {
     const pane = document.querySelector('.vue-flow__pane')
