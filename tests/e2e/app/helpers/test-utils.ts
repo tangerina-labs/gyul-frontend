@@ -21,7 +21,8 @@ export async function startFresh(page: Page): Promise<void> {
   await page.evaluate(() => localStorage.clear())
 
   await page.reload()
-  await page.waitForLoadState('networkidle')
+  // Wait for the app to be ready by checking for the header
+  await expect(page.getByText('gyul')).toBeVisible()
 }
 
 // =============================================================================

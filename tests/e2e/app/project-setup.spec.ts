@@ -13,15 +13,12 @@ test.describe('Project Setup', () => {
 
   test('should render the application without errors', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
-
+    // The expect already waits for the element, no need for networkidle
     await expect(page.getByText('Transform fleeting tweets into lasting understanding')).toBeVisible()
   })
 
   test('should show landing page at root', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
-
     await expect(page.getByRole('link', { name: 'Start exploring' })).toBeVisible()
   })
 
@@ -33,8 +30,6 @@ test.describe('Project Setup', () => {
 
   test('should display canvas list view on /canvases', async ({ page }) => {
     await page.goto('/canvases')
-    await page.waitForLoadState('networkidle')
-
     await expect(page.getByText('gyul')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Novo Canvas' })).toBeVisible()
   })
@@ -49,7 +44,8 @@ test.describe('Project Setup', () => {
     })
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    // Wait for app to be fully loaded before checking errors
+    await expect(page.getByRole('link', { name: 'Start exploring' })).toBeVisible()
 
     const criticalErrors = consoleErrors.filter((error) => !error.includes('favicon'))
 
@@ -58,14 +54,12 @@ test.describe('Project Setup', () => {
 
   test('should have proper page title', async ({ page }) => {
     await page.goto('/canvases')
-    await page.waitForLoadState('networkidle')
+    await expect(page.getByText('gyul')).toBeVisible()
     await expect(page).toHaveTitle('Meus Canvas - gyul')
   })
 
   test('should show empty state for new user', async ({ page }) => {
     await page.goto('/canvases')
-    await page.waitForLoadState('networkidle')
-
     await expect(page.getByText('Nenhum canvas ainda')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Criar primeiro canvas' })).toBeVisible()
   })

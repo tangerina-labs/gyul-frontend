@@ -24,14 +24,11 @@ test.describe('Persistencia de Dados', () => {
     await expect(page.getByText('Conteudo importante')).toBeVisible()
 
     await page.reload()
-    await page.waitForLoadState('networkidle')
-
+    // The expect waits for the element, no need for networkidle
     await expect(page.getByText('Conteudo importante')).toBeVisible()
 
     await goBackToList(page)
     await page.reload()
-    await page.waitForLoadState('networkidle')
-
     await expectCanvasInList(page, 'Canvas Persistente')
 
     await page.getByText('Canvas Persistente').click()
@@ -47,8 +44,6 @@ test.describe('Persistencia de Dados', () => {
     await expect(page.getByTestId('tweet-author-handle')).toBeVisible()
 
     await page.reload()
-    await page.waitForLoadState('networkidle')
-
     await expect(page.getByTestId('tweet-author-handle')).toBeVisible()
   })
 
@@ -62,8 +57,6 @@ test.describe('Persistencia de Dados', () => {
     await expect(page.getByTestId('question-ai-badge')).toBeVisible({ timeout: 10000 })
 
     await page.reload()
-    await page.waitForLoadState('networkidle')
-
     await expect(page.getByTestId('question-prompt-text')).toContainText('Pergunta que deve persistir')
     await expect(page.getByTestId('question-ai-badge')).toBeVisible()
   })
@@ -81,8 +74,6 @@ test.describe('Persistencia de Dados', () => {
     await expect(page.locator('.vue-flow__edge')).toHaveCount(1)
 
     await page.reload()
-    await page.waitForLoadState('networkidle')
-
     await expect(page.locator('.vue-flow__edge')).toHaveCount(1, { timeout: 5000 })
   })
 
@@ -97,7 +88,7 @@ test.describe('Persistencia de Dados', () => {
     await fitCanvasView(page)
 
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await expect(page.getByText('Parent Note')).toBeVisible()
     await fitCanvasView(page)
 
     const initialStorageData = await page.evaluate(() => {
@@ -149,7 +140,7 @@ test.describe('Persistencia de Dados', () => {
     expect(afterDragNodePosition.y).not.toBeCloseTo(initialNodePosition.y, 0)
 
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await expect(page.getByText('Parent Note')).toBeVisible()
 
     const finalStorageData = await page.evaluate(() => {
       return localStorage.getItem('gyul-state')
@@ -174,8 +165,6 @@ test.describe('Persistencia de Dados', () => {
     await expect(page.getByText('Nota multipla')).toBeVisible()
 
     await page.reload()
-    await page.waitForLoadState('networkidle')
-
     await expect(page.getByTestId('tweet-author-handle')).toBeVisible()
     await expect(page.getByText('Nota multipla')).toBeVisible()
   })
@@ -195,8 +184,6 @@ test.describe('Persistencia de Dados', () => {
     await expectCanvasInList(page, 'Canvas 3')
 
     await page.reload()
-    await page.waitForLoadState('networkidle')
-
     await expectCanvasInList(page, 'Canvas 1')
     await expectCanvasInList(page, 'Canvas 2')
     await expectCanvasInList(page, 'Canvas 3')
@@ -214,8 +201,7 @@ test.describe('Persistencia de Dados', () => {
     await expect(page.locator('article').filter({ hasText: 'Canvas Para Deletar' })).not.toBeVisible()
 
     await page.reload()
-    await page.waitForLoadState('networkidle')
-
+    await expect(page.getByText('gyul')).toBeVisible()
     await expect(page.locator('article').filter({ hasText: 'Canvas Para Deletar' })).not.toBeVisible()
   })
 
@@ -225,11 +211,9 @@ test.describe('Persistencia de Dados', () => {
     const url = page.url()
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await expect(page.getByRole('link', { name: 'Start exploring' })).toBeVisible()
 
     await page.goto(url)
-    await page.waitForLoadState('networkidle')
-
     await expect(page.getByRole('heading', { name: 'Canvas Direto' })).toBeVisible()
   })
 

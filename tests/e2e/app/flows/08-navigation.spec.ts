@@ -35,7 +35,6 @@ test.describe('Navegacao', () => {
 
   test('rota raiz mostra landing page', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
     await expect(page.getByRole('link', { name: 'Start exploring' })).toBeVisible()
   })
 
@@ -50,11 +49,9 @@ test.describe('Navegacao', () => {
     const canvasUrl = page.url()
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await expect(page.getByRole('link', { name: 'Start exploring' })).toBeVisible()
 
     await page.goto(canvasUrl)
-    await page.waitForLoadState('networkidle')
-
     await expect(page.getByRole('heading', { name: 'Canvas Deep Link' })).toBeVisible()
   })
 
@@ -125,7 +122,7 @@ test.describe('Navegacao', () => {
     await expectOnCanvasList(page)
 
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await expect(page.getByText('gyul')).toBeVisible()
 
     expect(page.url()).toContain('/canvases')
     await expectOnCanvasList(page)
@@ -137,10 +134,9 @@ test.describe('Navegacao', () => {
     const url = page.url()
 
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await expect(page.getByRole('heading', { name: 'Canvas Refresh' })).toBeVisible()
 
     expect(page.url()).toBe(url)
-    await expect(page.getByRole('heading', { name: 'Canvas Refresh' })).toBeVisible()
   })
 
   test('sem erros de console durante navegacao', async ({ page }) => {
