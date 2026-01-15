@@ -1,4 +1,4 @@
-import { Editor, createShapeId, type TLShapeId } from 'tldraw'
+import { Editor, createShapeId, type TLArrowShape, type TLArrowShapeProps, type TLShapeId, type TLUnknownShape } from 'tldraw'
 import type { ShapeType } from '../types/shapes'
 
 /**
@@ -40,6 +40,57 @@ export function calculateChildPosition(
 }
 
 /**
+ * Verifica se uma arrow tem bindings configurados nos dois terminais (start e end).
+ * Retorna informações sobre os bindings encontrados.
+ * 
+ * IMPORTANTE: Usa editor.getBindingsFromShape() que consulta diretamente o store,
+ * pois as props da arrow podem não estar atualizadas imediatamente após criar os bindings.
+ */
+export function checkArrowBindings(editor: Editor, arrowId: TLShapeId): {
+  hasStartBinding: boolean
+  hasEndBinding: boolean
+  hasBothBindings: boolean
+  startShapeId: TLShapeId | null
+  endShapeId: TLShapeId | null
+  bindings: Array<{ terminal: string; toId: TLShapeId }>
+} {
+  const arrow = editor.getShape(arrowId)
+  
+  if (!arrow || arrow.type !== 'arrow') {
+    return {
+      hasStartBinding: false,
+      hasEndBinding: false,
+      hasBothBindings: false,
+      startShapeId: null,
+      endShapeId: null,
+      bindings: [],
+    }
+  }
+
+  // Buscar bindings diretamente no store (método mais confiável)
+  // editor.getBindingsFromShape() retorna todos os bindings onde fromId === arrowId
+  const arrowBindings = editor.getBindingsFromShape(arrowId, 'arrow')
+  
+  const bindingDetails = arrowBindings.map((binding) => ({
+    terminal: (binding.props as any).terminal || 'unknown',
+    toId: binding.toId,
+  }))
+
+  // Encontrar bindings de start e end
+  const startBinding = arrowBindings.find((b) => (b.props as any).terminal === 'start')
+  const endBinding = arrowBindings.find((b) => (b.props as any).terminal === 'end')
+
+  return {
+    hasStartBinding: !!startBinding,
+    hasEndBinding: !!endBinding,
+    hasBothBindings: !!startBinding && !!endBinding,
+    startShapeId: startBinding?.toId ?? null,
+    endShapeId: endBinding?.toId ?? null,
+    bindings: bindingDetails,
+  }
+}
+
+/**
  * Conta quantos filhos um shape tem (através de arrows saindo dele).
  */
 export function getChildrenCount(editor: Editor, parentId: TLShapeId): number {
@@ -76,7 +127,7 @@ export function createArrow(
   }
 
   // Step 1: Create arrow with numeric coordinates and metadata
-  editor.createShape({
+  const payloadArrowShape = {
     id: arrowId,
     type: 'arrow',
     props: {
@@ -100,7 +151,9 @@ export function createArrow(
       childId: childId,
       createdBy: 'system',
     },
-  })
+  }
+
+  editor.createShape(payloadArrowShape)
 
   // Step 2: Create bindings (separate records) so arrow follows shapes
   // Binding for start (parent)
@@ -132,6 +185,21 @@ export function createArrow(
   // Send arrow to back so it doesn't cover shapes
   editor.sendToBack([arrowId])
 
+  // Verificar se bindings foram criados corretamente (opcional - útil para debug)
+  // Fazer isso após um tick para dar tempo do store atualizar
+  if (import.meta.env.DEV) {
+    requestAnimationFrame(() => {
+      const bindingStatus = checkArrowBindings(editor, arrowId)
+      console.log('Arrow bindings created:', {
+        arrowId,
+        hasBothBindings: bindingStatus.hasBothBindings,
+        start: bindingStatus.startShapeId,
+        end: bindingStatus.endShapeId,
+        allBindings: bindingStatus.bindings,
+      })
+    })
+  }
+
   return arrowId
 }
 
@@ -146,7 +214,7 @@ export function createChildShape(
 ): { childId: TLShapeId; arrowId: TLShapeId } | null {
   // Validação parcial: verificar se pai existe
   const parent = editor.getShape(parentId)
-  
+
   if (!parent) {
     console.error(`Parent shape ${parentId} not found`)
     return null

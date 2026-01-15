@@ -7,6 +7,7 @@ import {
   submitQuestion,
   writeNote,
   fitCanvasView,
+  clickZoomOut,
   expectArrowConnects,
   expectParentChildArrows,
 } from "./helpers/test-utils";
@@ -99,6 +100,8 @@ test.describe("Shape Connections (Conexões Entre Shapes)", () => {
       await submitQuestion(page, "Primeira pergunta?");
 
       // Question -> Note
+      await clickZoomOut(page);
+      await clickZoomOut(page);
       await page
         .getByTestId("question-add-child-btn")
         .first()
@@ -108,6 +111,8 @@ test.describe("Shape Connections (Conexões Entre Shapes)", () => {
       await fitCanvasView(page);
 
       // Note -> Question (mais profundo)
+      await clickZoomOut(page);
+      await clickZoomOut(page);
       await page.getByTestId("note-add-child-btn").click({ force: true });
       await page.getByTestId("menu-option-question").click();
       await fitCanvasView(page);

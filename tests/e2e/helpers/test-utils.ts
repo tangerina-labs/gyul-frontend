@@ -49,7 +49,7 @@ export async function openCreateModal(page: Page): Promise<void> {
  */
 export async function createCanvasViaUI(
   page: Page,
-  name?: string
+  name?: string,
 ): Promise<string> {
   await openCreateModal(page);
 
@@ -79,7 +79,7 @@ export async function createCanvasViaUI(
  */
 export async function createCanvasViaEnter(
   page: Page,
-  name?: string
+  name?: string,
 ): Promise<string> {
   await openCreateModal(page);
 
@@ -118,7 +118,7 @@ export async function createCanvas(page: Page, name?: string): Promise<string> {
  */
 export async function deleteCanvasViaUI(
   page: Page,
-  canvasName: string
+  canvasName: string,
 ): Promise<void> {
   // Find the canvas card by name
   const card = page
@@ -170,7 +170,7 @@ export async function waitForCanvas(page: Page): Promise<void> {
  */
 export async function waitForStatePersistence(
   page: Page,
-  canvasId: string
+  canvasId: string,
 ): Promise<void> {
   // Wait for localStorage to contain the canvas
   await page.waitForFunction(
@@ -185,7 +185,7 @@ export async function waitForStatePersistence(
       }
     },
     canvasId,
-    { timeout: 5000 }
+    { timeout: 5000 },
   );
   // Add a small buffer to ensure the write completed
   await page.waitForTimeout(100);
@@ -196,7 +196,7 @@ export async function waitForStatePersistence(
  */
 export async function expectCanvasInList(
   page: Page,
-  canvasName: string
+  canvasName: string,
 ): Promise<void> {
   const card = page
     .getByTestId("canvas-card")
@@ -274,7 +274,7 @@ export async function getCanvasZoom(page: Page): Promise<number> {
  * Gets the camera position (x, y) of the canvas.
  */
 export async function getCanvasCamera(
-  page: Page
+  page: Page,
 ): Promise<{ x: number; y: number; z: number }> {
   return page.evaluate(() => {
     const editor = (
@@ -461,7 +461,7 @@ export async function clickRedo(page: Page): Promise<void> {
 export async function panCanvas(
   page: Page,
   deltaX: number,
-  deltaY: number
+  deltaY: number,
 ): Promise<void> {
   const canvas = page.locator(".tl-canvas");
   const box = await canvas.boundingBox();
@@ -491,7 +491,7 @@ export async function panCanvas(
 export async function addShapeViaMenu(
   page: Page,
   shapeType: "Tweet" | "Question" | "Note",
-  position: { x: number; y: number } = { x: 400, y: 300 }
+  position: { x: number; y: number } = { x: 400, y: 300 },
 ): Promise<void> {
   // Click "Novo Fluxo" button
   await page.getByTestId("toolbox-new-flow").click();
@@ -547,7 +547,7 @@ export async function loadTweet(page: Page, url: string): Promise<void> {
  */
 export async function loadTweetViaEnter(
   page: Page,
-  url: string
+  url: string,
 ): Promise<void> {
   const urlInput = page.getByTestId("tweet-url-input");
 
@@ -580,7 +580,7 @@ export async function getTweetCardCount(page: Page): Promise<number> {
  */
 export async function submitQuestion(
   page: Page,
-  question: string
+  question: string,
 ): Promise<void> {
   await fitCanvasView(page);
   const promptInput = page.getByTestId("question-prompt-input").last();
@@ -605,7 +605,7 @@ export async function getQuestionCardCount(page: Page): Promise<number> {
 export async function expectQuestionState(
   page: Page,
   state: "draft" | "loading" | "done" | "error",
-  index = 0
+  index = 0,
 ): Promise<void> {
   const questionCard = page.getByTestId("question-card").nth(index);
   await expect(questionCard).toHaveAttribute("data-status", state);
@@ -641,7 +641,7 @@ export async function getNoteCardCount(page: Page): Promise<number> {
 export async function addChildShape(
   page: Page,
   parentTestId: string,
-  childType: "Tweet" | "Question" | "Note"
+  childType: "Tweet" | "Question" | "Note",
 ): Promise<void> {
   // Click the parent shape to ensure it's focused
   await page.getByTestId(parentTestId).click();
@@ -667,16 +667,121 @@ export async function getArrowCount(page: Page): Promise<number> {
 }
 
 /**
+ * Arrow binding validation result interface.
+ */
+interface ArrowBindingValidation {
+  validCount: number;
+  invalidCount: number;
+  totalCount: number;
+  validArrows: Array<{
+    id: string;
+    hasStartBinding: boolean;
+    hasEndBinding: boolean;
+    startShapeId: string | null;
+    endShapeId: string | null;
+  }>;
+  invalidArrows: Array<{
+    id: string;
+    reason: string;
+    hasStartBinding: boolean;
+    hasEndBinding: boolean;
+  }>;
+}
+
+/**
+ * Validates arrow bindings structure.
+ * Returns detailed information about which arrows have valid bindings and which don't.
+ * 
+ * Valid binding criteria:
+ * - start.type === 'binding'
+ * - end.type === 'binding'
+ * - start.boundShapeId exists
+ * - end.boundShapeId exists
+ */
+export function validateArrowBindings(
+  arrows: Array<{
+    id?: string;
+    typeName?: string;
+    type?: string;
+    props?: {
+      start?: { type?: string; boundShapeId?: string };
+      end?: { type?: string; boundShapeId?: string };
+    };
+  }>,
+): ArrowBindingValidation {
+  const validArrows: ArrowBindingValidation["validArrows"] = [];
+  const invalidArrows: ArrowBindingValidation["invalidArrows"] = [];
+
+  for (const arrow of arrows) {
+    const hasStartBinding =
+      arrow.props?.start?.type === "binding" &&
+      !!arrow.props?.start?.boundShapeId;
+    const hasEndBinding =
+      arrow.props?.end?.type === "binding" && !!arrow.props?.end?.boundShapeId;
+    const hasBothBindings = hasStartBinding && hasEndBinding;
+
+    if (hasBothBindings) {
+      validArrows.push({
+        id: arrow.id || "unknown",
+        hasStartBinding,
+        hasEndBinding,
+        startShapeId: arrow.props!.start!.boundShapeId!,
+        endShapeId: arrow.props!.end!.boundShapeId!,
+      });
+    } else {
+      const reasons: string[] = [];
+      if (!hasStartBinding) {
+        if (!arrow.props?.start?.type) {
+          reasons.push("missing start.type");
+        } else if (arrow.props.start.type !== "binding") {
+          reasons.push(`start.type is '${arrow.props.start.type}', not 'binding'`);
+        } else if (!arrow.props.start.boundShapeId) {
+          reasons.push("missing start.boundShapeId");
+        }
+      }
+      if (!hasEndBinding) {
+        if (!arrow.props?.end?.type) {
+          reasons.push("missing end.type");
+        } else if (arrow.props.end.type !== "binding") {
+          reasons.push(`end.type is '${arrow.props.end.type}', not 'binding'`);
+        } else if (!arrow.props.end.boundShapeId) {
+          reasons.push("missing end.boundShapeId");
+        }
+      }
+
+      invalidArrows.push({
+        id: arrow.id || "unknown",
+        reason: reasons.join(", "),
+        hasStartBinding,
+        hasEndBinding,
+      });
+    }
+  }
+
+  return {
+    validCount: validArrows.length,
+    invalidCount: invalidArrows.length,
+    totalCount: arrows.length,
+    validArrows,
+    invalidArrows,
+  };
+}
+
+/**
  * Verifies that an arrow connects two shapes.
  * This is a basic check that verifies arrow existence and binding structure.
- * Note: parentTestId and childTestId are for future detailed validation
+ * 
+ * IMPORTANT: tldraw stores bindings as separate records in the store,
+ * not necessarily in the arrow's props. This function checks both:
+ * 1. Arrow props (for runtime state)
+ * 2. Binding records in the store (source of truth)
  */
 export async function expectArrowConnects(
   page: Page,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _parentTestId: string,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _childTestId: string
+  _childTestId: string,
 ): Promise<void> {
   // Verify that at least one arrow exists
   const arrowCount = await getArrowCount(page);
@@ -684,36 +789,77 @@ export async function expectArrowConnects(
 
   // Additional verification via storage (checks binding structure)
   const storageData = await page.evaluate(() =>
-    localStorage.getItem("gyul-state")
+    localStorage.getItem("gyul-state"),
   );
   expect(storageData).not.toBeNull();
 
-  interface ShapeRecord {
+  interface StoreRecord {
+    id?: string;
     typeName?: string;
     type?: string;
+    fromId?: string;
+    toId?: string;
     props?: {
       start?: { type?: string; boundShapeId?: string };
       end?: { type?: string; boundShapeId?: string };
+      terminal?: string;
     };
   }
 
   const parsed = JSON.parse(storageData!);
   const snapshot = parsed.state.state.canvases[0].snapshot;
-  const arrows = Object.values(snapshot.store as ShapeRecord[]).filter(
-    (r) => r?.typeName === "shape" && r?.type === "arrow"
+  const storeRecords = Object.values(snapshot.store as StoreRecord[]);
+
+  // Find arrows
+  const arrows = storeRecords.filter(
+    (r) => r?.typeName === "shape" && r?.type === "arrow",
   );
 
   expect(arrows.length).toBeGreaterThan(0);
 
-  // Verify that arrows have proper binding structure
-  const arrowsWithBindings = arrows.filter(
-    (a: ShapeRecord) =>
-      a.props?.start?.type === "binding" &&
-      a.props?.end?.type === "binding" &&
-      a.props?.start?.boundShapeId &&
-      a.props?.end?.boundShapeId
-  );
-  expect(arrowsWithBindings.length).toBeGreaterThan(0);
+  console.log({ arrowProps: arrows[0].props });
+
+  // Find binding records (separate from arrow shapes)
+  const bindings = storeRecords.filter((r) => r?.typeName === "binding");
+
+  console.log({
+    bindingCount: bindings.length,
+    bindings: bindings.map((b) => ({
+      id: b.id,
+      fromId: b.fromId,
+      toId: b.toId,
+      terminal: b.props?.terminal,
+    })),
+  });
+
+  // Check if bindings exist for arrows
+  const arrowIds = arrows.map((a) => a.id);
+  const arrowBindings = bindings.filter((b) => arrowIds.includes(b.fromId));
+
+  // Bindings should exist as separate records
+  if (arrowBindings.length === 0) {
+    console.error("No binding records found in store for arrows");
+  }
+  expect(arrowBindings.length).toBeGreaterThan(0);
+
+  // Each arrow should have at least 2 bindings (start and end)
+  const arrowId = arrows[0].id;
+  const bindingsForFirstArrow = bindings.filter((b) => b.fromId === arrowId);
+  
+  console.log({
+    firstArrowId: arrowId,
+    bindingsForFirstArrow: bindingsForFirstArrow.map((b) => ({
+      terminal: b.props?.terminal,
+      toId: b.toId,
+    })),
+  });
+
+  if (bindingsForFirstArrow.length < 2) {
+    console.error(
+      `Arrow ${arrowId} has only ${bindingsForFirstArrow.length} bindings, expected at least 2`,
+    );
+  }
+  expect(bindingsForFirstArrow.length).toBeGreaterThanOrEqual(2);
 }
 
 /**
@@ -722,7 +868,7 @@ export async function expectArrowConnects(
  */
 export async function getParentChildArrowCount(page: Page): Promise<number> {
   const storageData = await page.evaluate(() =>
-    localStorage.getItem("gyul-state")
+    localStorage.getItem("gyul-state"),
   );
 
   if (!storageData) return 0;
@@ -744,11 +890,11 @@ export async function getParentChildArrowCount(page: Page): Promise<number> {
 
   if (!snapshot) return 0;
 
-  const parentChildArrows = Object.values(snapshot.store).filter(
-    (r: ArrowRecord) =>
+  const parentChildArrows = (Object.values(snapshot.store) as ArrowRecord[]).filter(
+    (r) =>
       r.typeName === "shape" &&
       r.type === "arrow" &&
-      r.meta?.isParentChildConnection === true
+      r.meta?.isParentChildConnection === true,
   );
 
   return parentChildArrows.length;
@@ -759,8 +905,148 @@ export async function getParentChildArrowCount(page: Page): Promise<number> {
  */
 export async function expectParentChildArrows(
   page: Page,
-  count: number
+  count: number,
 ): Promise<void> {
   const arrowCount = await getParentChildArrowCount(page);
   expect(arrowCount).toBe(count);
+}
+
+/**
+ * Gets all arrows with valid bindings from storage.
+ * Returns arrows that have both start and end bindings properly configured.
+ */
+export async function getArrowsWithValidBindings(page: Page): Promise<
+  Array<{
+    id: string;
+    startShapeId: string;
+    endShapeId: string;
+    meta?: Record<string, unknown>;
+  }>
+> {
+  const storageData = await page.evaluate(() =>
+    localStorage.getItem("gyul-state"),
+  );
+
+  if (!storageData) return [];
+
+  interface ArrowRecord {
+    id?: string;
+    typeName?: string;
+    type?: string;
+    meta?: Record<string, unknown>;
+    props?: {
+      start?: { type?: string; boundShapeId?: string };
+      end?: { type?: string; boundShapeId?: string };
+    };
+  }
+
+  const parsed = JSON.parse(storageData);
+  const snapshot = parsed.state.state.canvases[0]?.snapshot;
+
+  if (!snapshot) return [];
+
+  const arrows = Object.values(snapshot.store as ArrowRecord[]).filter(
+    (r) => r?.typeName === "shape" && r?.type === "arrow",
+  );
+
+  const validation = validateArrowBindings(arrows);
+  
+  return validation.validArrows.map((arrow) => {
+    const originalArrow = arrows.find((a) => a.id === arrow.id);
+    return {
+      id: arrow.id,
+      startShapeId: arrow.startShapeId!,
+      endShapeId: arrow.endShapeId!,
+      meta: originalArrow?.meta,
+    };
+  });
+}
+
+/**
+ * Validates that a specific arrow connects two shapes with proper bindings.
+ * More strict than expectArrowConnects - validates the specific connection.
+ */
+export async function expectArrowConnectsShapes(
+  page: Page,
+  startShapeId: string,
+  endShapeId: string,
+): Promise<void> {
+  const arrowsWithBindings = await getArrowsWithValidBindings(page);
+
+  const matchingArrow = arrowsWithBindings.find(
+    (arrow) =>
+      arrow.startShapeId === startShapeId && arrow.endShapeId === endShapeId,
+  );
+
+  expect(matchingArrow).toBeDefined();
+  expect(matchingArrow?.startShapeId).toBe(startShapeId);
+  expect(matchingArrow?.endShapeId).toBe(endShapeId);
+}
+
+/**
+ * Gets detailed binding validation report for all arrows.
+ * Useful for debugging when tests fail.
+ */
+export async function getArrowBindingReport(
+  page: Page,
+): Promise<ArrowBindingValidation> {
+  const storageData = await page.evaluate(() =>
+    localStorage.getItem("gyul-state"),
+  );
+
+  if (!storageData) {
+    return {
+      validCount: 0,
+      invalidCount: 0,
+      totalCount: 0,
+      validArrows: [],
+      invalidArrows: [],
+    };
+  }
+
+  interface ArrowRecord {
+    id?: string;
+    typeName?: string;
+    type?: string;
+    props?: {
+      start?: { type?: string; boundShapeId?: string };
+      end?: { type?: string; boundShapeId?: string };
+    };
+  }
+
+  const parsed = JSON.parse(storageData);
+  const snapshot = parsed.state.state.canvases[0]?.snapshot;
+
+  if (!snapshot) {
+    return {
+      validCount: 0,
+      invalidCount: 0,
+      totalCount: 0,
+      validArrows: [],
+      invalidArrows: [],
+    };
+  }
+
+  const arrows = Object.values(snapshot.store as ArrowRecord[]).filter(
+    (r) => r?.typeName === "shape" && r?.type === "arrow",
+  );
+
+  return validateArrowBindings(arrows);
+}
+
+/**
+ * Expects all arrows to have valid bindings.
+ * Useful for ensuring data integrity across the canvas.
+ */
+export async function expectAllArrowsHaveValidBindings(
+  page: Page,
+): Promise<void> {
+  const report = await getArrowBindingReport(page);
+
+  if (report.invalidCount > 0) {
+    console.error("Invalid arrows found:", report.invalidArrows);
+  }
+
+  expect(report.invalidCount).toBe(0);
+  expect(report.validCount).toBe(report.totalCount);
 }
