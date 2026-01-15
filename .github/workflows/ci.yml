@@ -31,7 +31,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Type check
-        run: pnpm vue-tsc --noEmit
+        run: pnpm tsc -b
 
   unit-tests:
     uses: ./.github/workflows/unit-tests.yml
