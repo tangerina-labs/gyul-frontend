@@ -1,22 +1,24 @@
 import { defineConfig } from 'vitest/config'
-import vue from '@vitejs/plugin-vue'
+import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [react()],
   test: {
     environment: 'jsdom',
-    include: ['tests/unit/**/*.spec.ts'],
+    include: ['tests/unit/**/*.spec.ts', 'tests/unit/**/*.spec.tsx'],
     globals: true,
+    setupFiles: ['./tests/unit/setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
       reportsDirectory: './coverage',
-      include: ['src/**/*.ts', 'src/**/*.vue'],
+      include: ['src/**/*.ts', 'src/**/*.tsx'],
       exclude: [
         'src/**/*.stories.ts',
         'src/**/*.spec.ts',
-        'src/main.ts',
+        'src/main.tsx',
+        'src/routeTree.gen.tsx',
       ],
     },
   },

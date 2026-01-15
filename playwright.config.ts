@@ -1,6 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
+  testDir: './tests/e2e',
+  testMatch: '**/*.spec.ts',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -15,19 +17,8 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    ...devices['Desktop Chrome']
   },
-  projects: [
-    {
-      name: 'test-harness',
-      testDir: './tests/e2e/test-harness',
-      use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'e2e',
-      testDir: './tests/e2e/app',
-      use: { ...devices['Desktop Chrome'] },
-    },
-  ],
   webServer: {
     command: 'pnpm run dev',
     url: 'http://localhost:5173',
