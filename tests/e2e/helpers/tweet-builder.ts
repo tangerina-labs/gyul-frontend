@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import type { TweetBuilder as ITweetBuilder, BuilderState } from "./shape-builder-types";
-import { ShapeHandle, getLatestShapeId, getTestIdFromType } from "./shape-handle";
+import { ShapeHandle, getShapeIdByTestCreationId, getTestIdFromType } from "./shape-handle";
 import {
   addShapeViaMenu,
   loadTweet,
@@ -15,6 +15,7 @@ export class TweetBuilder implements ITweetBuilder {
   private url?: string;
   private useEnter = false;
   private parentTestId?: string;
+  private creationId: string;
   private state: BuilderState = {
     isChild: false,
     position: { x: 400, y: 300 },
@@ -27,6 +28,9 @@ export class TweetBuilder implements ITweetBuilder {
     parentId?: string,
     parentTestId?: string
   ) {
+    // Gerar UUID único para esta criação
+    this.creationId = crypto.randomUUID();
+    
     if (parentId && parentTestId) {
       this.state.isChild = true;
       this.state.parentId = parentId;
@@ -87,6 +91,9 @@ export class TweetBuilder implements ITweetBuilder {
       await addShapeViaMenu(this.page, "Tweet", this.state.position);
     }
 
+    // Injetar metadata de teste APÓS criação
+    await this.injectTestMetadata();
+
     // Load tweet if URL provided
     if (this.url) {
       if (this.useEnter) {
@@ -101,8 +108,8 @@ export class TweetBuilder implements ITweetBuilder {
       await fitCanvasView(this.page);
     }
 
-    // Get the tldraw shape ID
-    const shapeId = await getLatestShapeId(this.page, "tweet");
+    // Buscar shape pelo creation ID
+    const shapeId = await getShapeIdByTestCreationId(this.page, this.creationId);
     const testId = getTestIdFromType("tweet");
 
     // If this was a child, wait a bit more for arrow creation
@@ -152,6 +159,42 @@ export class TweetBuilder implements ITweetBuilder {
     // Wait for menu to close and shape to be created
     await this.page.getByTestId("shape-type-menu").waitFor({ state: "hidden" });
     await this.page.waitForTimeout(300);
+  }
+
+  /**
+   * Injeta metadata de teste na shape mais recente do tipo
+   */
+  private async injectTestMetadata(): Promise<void> {
+    await this.page.evaluate((creationId) => {
+      const editor = (window as any).__tldraw_editor__;
+      if (!editor) return;
+      
+      // Pegar todas as shapes do canvas atual
+      const shapes = editor.getCurrentPageShapes();
+      
+      // Filtrar por tipo 'tweet' e pegar a que não tem _testCreationId
+      const targetShape = shapes
+        .filter((s: any) => s.type === 'tweet')
+        .find((s: any) => !s.meta?._testCreationId);
+      
+      if (!targetShape) {
+        console.warn('No target shape found for test metadata injection');
+        return;
+      }
+      
+      // Atualizar shape com metadata de teste
+      editor.updateShape({
+        id: targetShape.id,
+        type: targetShape.type,
+        meta: {
+          ...targetShape.meta,
+          _testCreationId: creationId,
+        },
+      });
+    }, this.creationId);
+    
+    // Aguardar persistência
+    await this.page.waitForTimeout(100);
   }
 
   /**

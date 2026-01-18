@@ -273,7 +273,7 @@ test.describe('Question Shape', () => {
       // Verifica que o texto tem altura maior que uma linha unica
       const height = await responseText
         .locator('[data-testid="expandable-text-content"]')
-        .evaluate((el) => el.offsetHeight)
+        .evaluate((el) => el['offsetHeight'])
       expect(height).toBeGreaterThan(20)
     })
 
@@ -290,9 +290,11 @@ test.describe('Question Shape', () => {
         await expect(toggle).toContainText('Ver mais')
 
         await toggle.click()
+        await fitCanvasView(page)
         await expect(toggle).toContainText('Ver menos')
-
+        
         await toggle.click()
+        await fitCanvasView(page)
         await expect(toggle).toContainText('Ver mais')
       }
     })

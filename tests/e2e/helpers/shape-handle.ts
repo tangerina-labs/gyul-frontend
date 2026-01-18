@@ -200,15 +200,14 @@ export class ShapeHandle implements IShapeHandle {
 }
 
 /**
- * Helper function to get the latest shape ID of a specific type from localStorage.
- * Used by builders after creating a shape to get its tldraw ID.
- * Includes retry logic to wait for localStorage to be updated.
+ * Get shape ID by test creation ID (deterministic lookup).
+ * This is similar to data-testid in HTML - we inject test metadata
+ * to make E2E tests reliable and deterministic.
  */
-export async function getLatestShapeId(
+export async function getShapeIdByTestCreationId(
   page: Page,
-  type: ShapeType
+  creationId: string
 ): Promise<string> {
-  // Retry up to 10 times with 100ms intervals (1 second total)
   let attempts = 0;
   const maxAttempts = 10;
   
@@ -232,39 +231,24 @@ export async function getLatestShapeId(
       continue;
     }
 
-    const shapes = (Object.values(snapshot.store) as StorageShapeRecord[])
-      .filter((r) => r.typeName === "shape" && r.type === type)
-      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    // Buscar shape com o _testCreationId específico
+    const shapes = Object.values(snapshot.store) as StorageShapeRecord[];
+    const targetShape = shapes.find(
+      (s) => s.typeName === "shape" && s.meta?._testCreationId === creationId
+    );
 
-    // DEBUG LOGS
-    console.log(`\n=== DEBUG getLatestShapeId for type: ${type} ===`);
-    console.log(`Found ${shapes.length} shape(s) of type '${type}'`);
-    shapes.forEach((s, i) => {
-      console.log(`  Shape ${i + 1}:`);
-      console.log(`    id: ${s.id}`);
-      console.log(`    createdAt: ${s.createdAt}`);
-      console.log(`    type: ${s.type}`);
-    });
-    console.log(`Returning: ${shapes[0]?.id}`);
-    console.log('=== END DEBUG ===\n');
-
-    if (shapes.length === 0) {
+    if (!targetShape?.id) {
       attempts++;
       await page.waitForTimeout(100);
       continue;
     }
 
-    const shapeId = shapes[0].id;
-    if (!shapeId) {
-      attempts++;
-      await page.waitForTimeout(100);
-      continue;
-    }
-
-    return shapeId;
+    return targetShape.id;
   }
   
-  throw new Error(`Failed to find shape of type '${type}' in storage after ${maxAttempts} attempts`);
+  throw new Error(
+    `Failed to find shape with _testCreationId '${creationId}' after ${maxAttempts} attempts`
+  );
 }
 
 /**

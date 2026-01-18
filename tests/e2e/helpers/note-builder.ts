@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import type { NoteBuilder as INoteBuilder, BuilderState } from "./shape-builder-types";
-import { ShapeHandle, getLatestShapeId, getTestIdFromType } from "./shape-handle";
+import { ShapeHandle, getShapeIdByTestCreationId, getTestIdFromType } from "./shape-handle";
 import {
   addShapeViaMenu,
   writeNote,
@@ -13,6 +13,7 @@ import {
 export class NoteBuilder implements INoteBuilder {
   private content?: string;
   private parentTestId?: string;
+  private creationId: string;
   private state: BuilderState = {
     isChild: false,
     position: { x: 400, y: 300 },
@@ -25,6 +26,9 @@ export class NoteBuilder implements INoteBuilder {
     parentId?: string,
     parentTestId?: string
   ) {
+    // Gerar UUID único para esta criação
+    this.creationId = crypto.randomUUID();
+    
     if (parentId && parentTestId) {
       this.state.isChild = true;
       this.state.parentId = parentId;
@@ -74,6 +78,9 @@ export class NoteBuilder implements INoteBuilder {
       await addShapeViaMenu(this.page, "Note", this.state.position);
     }
 
+    // Injetar metadata de teste APÓS criação
+    await this.injectTestMetadata();
+
     // Write content if provided
     if (this.content) {
       await writeNote(this.page, this.content);
@@ -84,8 +91,8 @@ export class NoteBuilder implements INoteBuilder {
       await fitCanvasView(this.page);
     }
 
-    // Get the tldraw shape ID
-    const shapeId = await getLatestShapeId(this.page, "note");
+    // Buscar shape pelo creation ID
+    const shapeId = await getShapeIdByTestCreationId(this.page, this.creationId);
     const testId = getTestIdFromType("note");
 
     // If this was a child, wait a bit more for arrow creation
@@ -135,6 +142,42 @@ export class NoteBuilder implements INoteBuilder {
     // Wait for menu to close and shape to be created
     await this.page.getByTestId("shape-type-menu").waitFor({ state: "hidden" });
     await this.page.waitForTimeout(300);
+  }
+
+  /**
+   * Injeta metadata de teste na shape mais recente do tipo
+   */
+  private async injectTestMetadata(): Promise<void> {
+    await this.page.evaluate((creationId) => {
+      const editor = (window as any).__tldraw_editor__;
+      if (!editor) return;
+      
+      // Pegar todas as shapes do canvas atual
+      const shapes = editor.getCurrentPageShapes();
+      
+      // Filtrar por tipo 'note' e pegar a que não tem _testCreationId
+      const targetShape = shapes
+        .filter((s: any) => s.type === 'note')
+        .find((s: any) => !s.meta?._testCreationId);
+      
+      if (!targetShape) {
+        console.warn('No target shape found for test metadata injection');
+        return;
+      }
+      
+      // Atualizar shape com metadata de teste
+      editor.updateShape({
+        id: targetShape.id,
+        type: targetShape.type,
+        meta: {
+          ...targetShape.meta,
+          _testCreationId: creationId,
+        },
+      });
+    }, this.creationId);
+    
+    // Aguardar persistência
+    await this.page.waitForTimeout(100);
   }
 
   /**

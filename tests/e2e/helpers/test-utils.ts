@@ -959,33 +959,10 @@ export async function expectArrowConnectsShapes(
 ): Promise<void> {
   const arrowsWithBindings = await getArrowsWithValidBindings(page);
 
-  // DEBUG LOGS
-  console.log('\n=== DEBUG expectArrowConnectsShapes ===');
-  console.log('Looking for connection:');
-  console.log('  startShapeId:', startShapeId);
-  console.log('  endShapeId:', endShapeId);
-  console.log('\nAll arrows found:', arrowsWithBindings.length);
-  
-  arrowsWithBindings.forEach((arrow, index) => {
-    console.log(`\nArrow ${index + 1}:`);
-    console.log('  arrow.id:', arrow.id);
-    console.log('  arrow.startShapeId:', arrow.startShapeId);
-    console.log('  arrow.endShapeId:', arrow.endShapeId);
-    console.log('  arrow.meta:', JSON.stringify(arrow.meta, null, 2));
-    console.log('  meta.parentId matches?', arrow.meta?.parentId === startShapeId);
-    console.log('  meta.childId matches?', arrow.meta?.childId === endShapeId);
-  });
-
   const matchingArrow = arrowsWithBindings.find(
     (arrow) =>
       arrow.meta?.parentId === startShapeId && arrow.meta.childId === endShapeId,
   );
-
-  console.log('\nMatching arrow found:', matchingArrow ? 'YES' : 'NO');
-  if (matchingArrow) {
-    console.log('Matching arrow details:', JSON.stringify(matchingArrow, null, 2));
-  }
-  console.log('=== END DEBUG ===\n');
 
   expect(matchingArrow).toBeDefined();
   expect(matchingArrow?.startShapeId).toBe(startShapeId);

@@ -6,6 +6,7 @@ import {
   expectParentChildArrows,
   getShapeCount,
   expectArrowConnectsShapes,
+  fitCanvasView,
 } from "./helpers/test-utils";
 
 /**
@@ -268,17 +269,25 @@ test.describe("Shape Builder API", () => {
         .submit("Parent question?")
         .build();
 
-      const child1 = await question.addChild("tweet")
+      await fitCanvasView(page)
+
+      await question.addChild("tweet")
         .loadUrl("https://twitter.com/user/status/666")
         .build();
 
-      const child2 = await question.addChild("note")
+      await fitCanvasView(page)
+
+      await question.addChild("note")
         .write("Child 2")
         .build();
 
-      const child3 = await question.addChild("note")
+      await fitCanvasView(page)
+
+      await question.addChild("note")
         .write("Child 3")
         .build();
+
+      await fitCanvasView(page)
 
       // 3 arrows from parent
       await expectParentChildArrows(page, 3);

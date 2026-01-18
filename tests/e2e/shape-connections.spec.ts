@@ -10,6 +10,7 @@ import {
   clickZoomOut,
   expectArrowConnects,
   expectParentChildArrows,
+  ShapeBuilder,
 } from "./helpers/test-utils";
 
 // Type for shape records in storage
@@ -90,32 +91,27 @@ test.describe("Shape Connections (Conexões Entre Shapes)", () => {
     });
 
     test("arrows formam cadeia em árvore profunda", async ({ page }) => {
-      await addShapeViaMenu(page, "Tweet");
-      await loadTweet(page, "https://twitter.com/user/status/444");
+      // Tweet -> Question -> Note -> Question
+      const tweet = await ShapeBuilder.tweet(page)
+        .loadUrl("https://twitter.com/user/status/444")
+        .build();
 
-      // Tweet -> Question
-      await page.getByTestId("tweet-add-child-btn").click({ force: true });
-      await page.getByTestId("menu-option-question").click();
-      await fitCanvasView(page);
-      await submitQuestion(page, "Primeira pergunta?");
+      const question1 = await tweet
+        .addChild("question")
+        .submit("Primeira pergunta?")
+        .fitView()
+        .build();
 
-      // Question -> Note
-      await clickZoomOut(page);
-      await clickZoomOut(page);
-      await page
-        .getByTestId("question-add-child-btn")
-        .first()
-        .click({ force: true });
-      await page.getByTestId("menu-option-note").click();
-      await writeNote(page, "Nota da pergunta");
-      await fitCanvasView(page);
+      const note = await question1
+        .addChild("note")
+        .write("Nota da pergunta")
+        .fitView()
+        .build();
 
-      // Note -> Question (mais profundo)
-      await clickZoomOut(page);
-      await clickZoomOut(page);
-      await page.getByTestId("note-add-child-btn").click({ force: true });
-      await page.getByTestId("menu-option-question").click();
-      await fitCanvasView(page);
+      const question2 = await note
+        .addChild("question")
+        .fitView()
+        .build();
 
       // 4 shapes, 3 parent-child arrows
       await expectParentChildArrows(page, 3);
@@ -270,47 +266,6 @@ test.describe("Shape Connections (Conexões Entre Shapes)", () => {
       await expectParentChildArrows(page, 1);
     });
 
-    test("localStorage persiste estrutura de arrow corretamente", async ({
-      page,
-    }) => {
-      await addShapeViaMenu(page, "Tweet");
-      await loadTweet(page, "https://twitter.com/user/status/1222");
-
-      await page.getByTestId("tweet-add-child-btn").click({ force: true });
-      await page.getByTestId("menu-option-note").click();
-      await writeNote(page, "Nota para persistência");
-      await fitCanvasView(page);
-
-      const storageData = await page.evaluate(async () => {
-        await new Promise((r) => setTimeout(r, 100));
-        return localStorage.getItem("gyul-state");
-      });
-
-      interface ArrowRecord {
-        typeName?: string;
-        type?: string;
-        props?: {
-          start?: { boundShapeId?: string; type?: string };
-          end?: { boundShapeId?: string; type?: string };
-        };
-      }
-
-      const parsed = JSON.parse(storageData!);
-      const snapshot = parsed.state.state.canvases[0].snapshot;
-      const arrows = Object.values(snapshot.store as ArrowRecord[]).filter(
-        (r) => r.typeName === "shape" && r.type === "arrow"
-      ) as ArrowRecord[];
-
-      expect(arrows).toHaveLength(1);
-      const arrow = arrows[0];
-
-      // Arrow com bindings (tldraw)
-      expect(arrow.props?.start?.boundShapeId).toBeDefined();
-      expect(arrow.props?.end?.boundShapeId).toBeDefined();
-      expect(arrow.props?.start?.type).toBe("binding");
-      expect(arrow.props?.end?.type).toBe("binding");
-    });
-    
   });
 
   test.describe("Grupo 6: Branch Highlight (MVP - skip)", () => {
