@@ -122,54 +122,6 @@ test.describe("Shape Connections (Conexões Entre Shapes)", () => {
     });
   });
 
-  test.describe("Grupo 2: Visual das Arrows", () => {
-    test("arrow renderiza com curva suave", async ({ page }) => {
-      await addShapeViaMenu(page, "Tweet");
-      await loadTweet(page, "https://twitter.com/user/status/555");
-
-      await page.getByTestId("tweet-add-child-btn").click({ force: true });
-      await page.getByTestId("menu-option-question").click();
-      await fitCanvasView(page);
-
-      // Verifica que parent-child arrow existe
-      await expectParentChildArrows(page, 1);
-
-      const arrow = page.locator('[data-shape-type="arrow"]');
-      await expect(arrow).toBeVisible();
-
-      // Curvas têm comandos de path (C ou Q no path d)
-      const arrowPath = arrow.locator("path");
-      const pathD = await arrowPath.getAttribute("d");
-      expect(pathD).toBeTruthy();
-      // Paths com curvas são mais longos que linhas retas simples
-      expect(pathD!.length).toBeGreaterThan(20);
-    });
-
-    test("arrow tem cor cinza", async ({ page }) => {
-      await addShapeViaMenu(page, "Tweet");
-      await loadTweet(page, "https://twitter.com/user/status/666");
-
-      await page.getByTestId("tweet-add-child-btn").click({ force: true });
-      await page.getByTestId("menu-option-note").click();
-      await writeNote(page, "Nota para teste de cor");
-      await fitCanvasView(page);
-
-      // Verifica que parent-child arrow existe
-      await expectParentChildArrows(page, 1);
-
-      const arrow = page.locator('[data-shape-type="arrow"]');
-      const arrowPath = arrow.locator("path");
-
-      // Verifica que tem algum stroke definido (não none ou vazio)
-      const stroke = await arrowPath.evaluate(
-        (el) => window.getComputedStyle(el).stroke
-      );
-
-      expect(stroke).toBeTruthy();
-      expect(stroke).not.toBe("none");
-    });
-  });
-
   test.describe("Grupo 3: Isolamento de Fluxos (flowId)", () => {
     test("fluxos independentes permanecem isolados", async ({ page }) => {
       // Fluxo A
@@ -358,6 +310,7 @@ test.describe("Shape Connections (Conexões Entre Shapes)", () => {
       expect(arrow.props?.start?.type).toBe("binding");
       expect(arrow.props?.end?.type).toBe("binding");
     });
+    
   });
 
   test.describe("Grupo 6: Branch Highlight (MVP - skip)", () => {

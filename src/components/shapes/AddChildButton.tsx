@@ -6,10 +6,61 @@ import { ShapeTypeMenu } from '../canvas/ShapeTypeMenu'
 import { createChildShape } from '../../utils/shapeChildCreation'
 import type { ShapeType } from '../../types/shapes'
 
+// Menu dimensions - adjust based on actual ShapeTypeMenu size
+const MENU_WIDTH = 160
+const MENU_HEIGHT = 120
+const MENU_GAP = 4
+const VIEWPORT_PADDING = 8
+
 interface AddChildButtonProps extends HTMLAttributes<HTMLButtonElement> {
   shapeId: string
   disabled?: boolean
   'data-testid'?: string
+}
+
+/**
+ * Calculates optimal menu position to keep it within viewport bounds.
+ * Tries to position menu below button first, then above if no space.
+ * Adjusts horizontal position if menu would overflow.
+ */
+function calculateMenuPosition(
+  buttonRect: DOMRect,
+  menuWidth: number,
+  menuHeight: number,
+  gap: number
+): { x: number; y: number } {
+  const viewport = {
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }
+
+  let x = buttonRect.left
+  let y = buttonRect.bottom + gap
+
+  // Check vertical overflow
+  if (y + menuHeight > viewport.height - VIEWPORT_PADDING) {
+    // Try positioning above button
+    const yAbove = buttonRect.top - menuHeight - gap
+    if (yAbove >= VIEWPORT_PADDING) {
+      y = yAbove
+    } else {
+      // Not enough space above or below, clamp to viewport
+      y = Math.max(VIEWPORT_PADDING, viewport.height - menuHeight - VIEWPORT_PADDING)
+    }
+  }
+
+  // Check horizontal overflow
+  if (x + menuWidth > viewport.width - VIEWPORT_PADDING) {
+    // Align to right edge of button
+    x = buttonRect.right - menuWidth
+    
+    // If still overflows left, clamp to viewport
+    if (x < VIEWPORT_PADDING) {
+      x = VIEWPORT_PADDING
+    }
+  }
+
+  return { x, y }
 }
 
 /**
@@ -30,13 +81,11 @@ export function AddChildButton({
   const handleClick = useCallback(() => {
     if (disabled) return
     
-    // Calculate menu position from button
+    // Calculate optimal menu position
     const rect = buttonRef.current?.getBoundingClientRect()
     if (rect) {
-      setMenuPosition({
-        x: rect.left,
-        y: rect.bottom + 4, // 4px gap below button
-      })
+      const position = calculateMenuPosition(rect, MENU_WIDTH, MENU_HEIGHT, MENU_GAP)
+      setMenuPosition(position)
     }
     
     setShowMenu(true)
@@ -70,10 +119,8 @@ export function AddChildButton({
     const updatePosition = () => {
       const rect = buttonRef.current?.getBoundingClientRect()
       if (rect) {
-        setMenuPosition({
-          x: rect.left,
-          y: rect.bottom + 4,
-        })
+        const position = calculateMenuPosition(rect, MENU_WIDTH, MENU_HEIGHT, MENU_GAP)
+        setMenuPosition(position)
       }
     }
 

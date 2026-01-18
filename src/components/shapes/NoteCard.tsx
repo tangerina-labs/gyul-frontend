@@ -21,7 +21,7 @@ const MIN_HEIGHT = 120
  * - readonly: Static text display with add child button
  *
  * Note: After finalization, the note becomes permanently readonly.
- * Empty notes are automatically removed.
+ * Empty notes remain in editing mode until content is added or explicitly cancelled with ESC.
  *
  * Height is automatically measured and synced to shape via useAutoHeight.
  * Footer is anchored to bottom when content is small.
@@ -35,16 +35,20 @@ export function NoteCard({ shape }: NoteCardProps) {
   // Auto-focus textarea when in editing mode
   useEffect(() => {
     if (shape.props.isEditing && textareaRef.current) {
-      textareaRef.current.focus()
+      // Use requestAnimationFrame to ensure the element is fully rendered
+      // This is especially important when shape is created outside viewport
+      requestAnimationFrame(() => {
+        textareaRef.current?.focus()
+      })
     }
-  }, [shape.props.isEditing])
+  }, [shape.props.isEditing, textareaRef])
 
   const finalize = useCallback(() => {
     const trimmed = content.trim()
 
+    // Don't finalize if empty - keep in editing mode
+    // User can explicitly cancel with ESC if they want to delete
     if (!trimmed) {
-      // Remove shape if content is empty
-      editor.deleteShape(shape.id)
       return
     }
 
@@ -59,21 +63,34 @@ export function NoteCard({ shape }: NoteCardProps) {
     })
   }, [editor, shape.id, content])
 
+  const handleCancel = useCallback(() => {
+    const trimmed = content.trim()
+    
+    // ESC with empty content = explicit cancellation
+    if (!trimmed) {
+      editor.deleteShape(shape.id)
+      return
+    }
+
+    // ESC with content = finalize normally
+    finalize()
+  }, [editor, shape.id, content, finalize])
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
-      // Enter without Shift finalizes the note
+      // Enter without Shift finalizes the note (only if has content)
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault()
         finalize()
       }
 
-      // Escape also finalizes
+      // Escape cancels - deletes if empty, finalizes if has content
       if (e.key === 'Escape') {
         e.preventDefault()
-        finalize()
+        handleCancel()
       }
     },
-    [finalize]
+    [finalize, handleCancel]
   )
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -110,7 +127,7 @@ export function NoteCard({ shape }: NoteCardProps) {
                 className="
                   w-full min-h-[80px] bg-transparent flex-1
                   text-sm text-gray-700 placeholder-gray-400
-                  resize-none border-none outline-none
+                  resize-none
                   focus:outline-none
                 "
                 maxLength={MAX_CONTENT_LENGTH}
@@ -122,7 +139,7 @@ export function NoteCard({ shape }: NoteCardProps) {
               data-testid="note-hint"
               className="text-xs text-gray-400 mt-auto"
             >
-              Enter para salvar, Shift+Enter para nova linha
+              Enter para salvar, ESC para cancelar, Shift+Enter para nova linha
             </span>
           </div>
         </BaseCard>

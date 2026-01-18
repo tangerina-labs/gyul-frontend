@@ -7,6 +7,7 @@ import {
   submitQuestion,
   getQuestionCardCount,
   clickUndo,
+  ShapeBuilder,
 } from './helpers/test-utils'
 
 test.describe('Question Shape', () => {
@@ -277,12 +278,9 @@ test.describe('Question Shape', () => {
     })
 
     test('TEST-QN-022: botao "Ver mais" para respostas longas', async ({ page }) => {
-      await addShapeViaMenu(page, 'Question')
-      // Usar prompt longo para gerar resposta longa
-      await submitQuestion(
-        page,
-        'Explique em detalhes extensos o significado completo de tudo isso com muita profundidade por favor'
-      )
+      const question = await ShapeBuilder.question(page)
+        .submit('Explique em detalhes extensos o significado completo de tudo isso com muita profundidade por favor')
+        .build()
 
       // Toggle pode ou nao aparecer dependendo do tamanho da resposta
       const toggle = page.getByTestId('expandable-text-toggle')

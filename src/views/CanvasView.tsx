@@ -10,6 +10,7 @@ import "tldraw/tldraw.css";
 import { useAppStore } from "../stores/appStore";
 import { CanvasUI } from "../components/canvas/CanvasUI";
 import { customShapeUtils } from "../shapes";
+import { deleteShapesWithArrows, ENABLE_CASCADE_DELETE } from "../utils/shapeDelete";
 
 // Hide unnecessary tldraw UI components and add custom UI
 const components: TLComponents = {
@@ -47,6 +48,31 @@ const cameraOptions: TLCameraOptions = {
   },
 };
 
+/**
+ * Creates action overrides for cascade delete functionality.
+ * This properly intercepts tldraw's delete actions and replaces them with cascade delete.
+ */
+function createCascadeDeleteOverrides() {
+  return {
+    actions(_editor: Editor, actions: any) {
+      // Override the delete action to use cascade delete
+      return {
+        ...actions,
+        'delete': {
+          ...actions['delete'],
+          onSelect(source: any) {
+            const selectedIds = _editor.getSelectedShapeIds()
+            if (selectedIds.length > 0) {
+              // Use cascade delete instead of default delete
+              deleteShapesWithArrows(_editor, selectedIds)
+            }
+          },
+        },
+      }
+    },
+  }
+}
+
 export function CanvasView() {
   const { id } = useParams({ from: "/canvas/$id" });
   const navigate = useNavigate();
@@ -62,8 +88,6 @@ export function CanvasView() {
       navigate({ to: "/canvases" });
     }
   }, [canvas, navigate]);
-
-  console.log("Render state:", { canvas: !!canvas, canvasId: id });
 
   // Setup handleMount callback - must be before early returns
   const handleMount = useCallback(
@@ -110,6 +134,7 @@ export function CanvasView() {
 
       return () => {
         unsubscribe();
+        
         // Clean up global reference
         if (typeof window !== "undefined") {
           delete (window as Window & { __tldraw_editor__?: Editor })
@@ -123,12 +148,6 @@ export function CanvasView() {
   const handleBack = useCallback(() => {
     navigate({ to: "/canvases" });
   }, [navigate]);
-
-  console.log({
-    id,
-    canvas,
-    saveCanvasSnapshot,
-  });
 
   // TypeScript safety check - this should never happen due to redirect above
   if (!canvas) {
@@ -168,6 +187,7 @@ export function CanvasView() {
         components={components}
         cameraOptions={cameraOptions}
         shapeUtils={customShapeUtils}
+        overrides={ENABLE_CASCADE_DELETE ? createCascadeDeleteOverrides() : undefined}
       />
     </div>
   );

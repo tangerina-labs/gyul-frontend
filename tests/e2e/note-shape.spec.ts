@@ -142,16 +142,6 @@ test.describe('Note Shape', () => {
   // Validacao e Auto-remocao
   // ===========================================================================
   test.describe('Validacao e Auto-remocao', () => {
-    test('TEST-NN-013: note vazio ao dar Enter e removido', async ({ page }) => {
-      await addShapeViaMenu(page, 'Note')
-
-      await expect(page.getByTestId('note-card')).toBeVisible()
-
-      // Press Enter without typing anything
-      await page.keyboard.press('Enter')
-
-      await expect(page.getByTestId('note-card')).not.toBeVisible()
-    })
 
     test('TEST-NN-014: note vazio ao dar Escape e removido', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
@@ -164,24 +154,29 @@ test.describe('Note Shape', () => {
       await expect(page.getByTestId('note-card')).not.toBeVisible()
     })
 
-    test('TEST-NN-015: note vazio ao dar blur e removido', async ({ page }) => {
+    test('TEST-NN-015: note vazio ao dar blur permanece em edicao', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
 
       await expect(page.getByTestId('note-card')).toBeVisible()
+      await expect(page.getByTestId('note-textarea')).toBeVisible()
 
       // Click outside without typing anything
       await page.locator('.tl-canvas').click({ position: { x: 100, y: 100 } })
 
-      await expect(page.getByTestId('note-card')).not.toBeVisible()
+      // Note should still be visible and in editing mode
+      await expect(page.getByTestId('note-card')).toBeVisible()
+      await expect(page.getByTestId('note-textarea')).toBeVisible()
     })
 
-    test('TEST-NN-016: note com apenas whitespace e removido', async ({ page }) => {
+    test('TEST-NN-016: note com apenas whitespace ao pressionar Enter permanece em edicao', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
 
       await page.getByTestId('note-textarea').fill('   ')
       await page.keyboard.press('Enter')
 
-      await expect(page.getByTestId('note-card')).not.toBeVisible()
+      // Note should still be visible and in editing mode (whitespace is trimmed to empty)
+      await expect(page.getByTestId('note-card')).toBeVisible()
+      await expect(page.getByTestId('note-textarea')).toBeVisible()
     })
 
     test('TEST-NN-017: limite de 1000 caracteres', async ({ page }) => {

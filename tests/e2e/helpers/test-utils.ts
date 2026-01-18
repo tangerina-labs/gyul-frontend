@@ -1,4 +1,32 @@
 import { expect, type Page } from "@playwright/test";
+import {
+  isParentChildArrowShape,
+  isArrowBindingRecord,
+  type ArrowBindingValidation,
+  type ArrowWithBindings,
+  ArrowBindingRecord,
+} from "../../../src/types";
+
+// =============================================================================
+// Fluent Builder API - New shape creation system
+// =============================================================================
+
+export { ShapeBuilder } from "./shape-builder";
+export { ShapeHandle } from "./shape-handle";
+export { TweetBuilder } from "./tweet-builder";
+export { QuestionBuilder } from "./question-builder";
+export { NoteBuilder } from "./note-builder";
+export type {
+  ShapeHandle as IShapeHandle,
+  TweetBuilder as ITweetBuilder,
+  QuestionBuilder as IQuestionBuilder,
+  NoteBuilder as INoteBuilder,
+  BaseBuilder,
+} from "./shape-builder-types";
+
+// =============================================================================
+// Legacy Test Utilities - For backwards compatibility
+// =============================================================================
 
 /**
  * Clears localStorage and navigates to the canvas list page.
@@ -667,28 +695,6 @@ export async function getArrowCount(page: Page): Promise<number> {
 }
 
 /**
- * Arrow binding validation result interface.
- */
-interface ArrowBindingValidation {
-  validCount: number;
-  invalidCount: number;
-  totalCount: number;
-  validArrows: Array<{
-    id: string;
-    hasStartBinding: boolean;
-    hasEndBinding: boolean;
-    startShapeId: string | null;
-    endShapeId: string | null;
-  }>;
-  invalidArrows: Array<{
-    id: string;
-    reason: string;
-    hasStartBinding: boolean;
-    hasEndBinding: boolean;
-  }>;
-}
-
-/**
  * Validates arrow bindings structure.
  * Returns detailed information about which arrows have valid bindings and which don't.
  * 
@@ -817,20 +823,8 @@ export async function expectArrowConnects(
 
   expect(arrows.length).toBeGreaterThan(0);
 
-  console.log({ arrowProps: arrows[0].props });
-
   // Find binding records (separate from arrow shapes)
   const bindings = storeRecords.filter((r) => r?.typeName === "binding");
-
-  console.log({
-    bindingCount: bindings.length,
-    bindings: bindings.map((b) => ({
-      id: b.id,
-      fromId: b.fromId,
-      toId: b.toId,
-      terminal: b.props?.terminal,
-    })),
-  });
 
   // Check if bindings exist for arrows
   const arrowIds = arrows.map((a) => a.id);
@@ -845,14 +839,6 @@ export async function expectArrowConnects(
   // Each arrow should have at least 2 bindings (start and end)
   const arrowId = arrows[0].id;
   const bindingsForFirstArrow = bindings.filter((b) => b.fromId === arrowId);
-  
-  console.log({
-    firstArrowId: arrowId,
-    bindingsForFirstArrow: bindingsForFirstArrow.map((b) => ({
-      terminal: b.props?.terminal,
-      toId: b.toId,
-    })),
-  });
 
   if (bindingsForFirstArrow.length < 2) {
     console.error(
@@ -915,51 +901,51 @@ export async function expectParentChildArrows(
  * Gets all arrows with valid bindings from storage.
  * Returns arrows that have both start and end bindings properly configured.
  */
-export async function getArrowsWithValidBindings(page: Page): Promise<
-  Array<{
-    id: string;
-    startShapeId: string;
-    endShapeId: string;
-    meta?: Record<string, unknown>;
-  }>
-> {
+export async function getArrowsWithValidBindings(
+  page: Page,
+): Promise<ArrowWithBindings[]> {
   const storageData = await page.evaluate(() =>
     localStorage.getItem("gyul-state"),
   );
 
   if (!storageData) return [];
 
-  interface ArrowRecord {
-    id?: string;
-    typeName?: string;
-    type?: string;
-    meta?: Record<string, unknown>;
-    props?: {
-      start?: { type?: string; boundShapeId?: string };
-      end?: { type?: string; boundShapeId?: string };
-    };
-  }
-
   const parsed = JSON.parse(storageData);
   const snapshot = parsed.state.state.canvases[0]?.snapshot;
 
   if (!snapshot) return [];
 
-  const arrows = Object.values(snapshot.store as ArrowRecord[]).filter(
-    (r) => r?.typeName === "shape" && r?.type === "arrow",
-  );
+  // 1. Get all records from store
+  const records = Object.values(snapshot.store as Record<string, unknown>[]);
 
-  const validation = validateArrowBindings(arrows);
-  
-  return validation.validArrows.map((arrow) => {
-    const originalArrow = arrows.find((a) => a.id === arrow.id);
-    return {
-      id: arrow.id,
-      startShapeId: arrow.startShapeId!,
-      endShapeId: arrow.endShapeId!,
-      meta: originalArrow?.meta,
-    };
-  });
+  // 2. Filter parent-child arrows using type guard
+  const arrows = records.filter(r => isParentChildArrowShape(r));
+
+  // 3. Filter arrow bindings using type guard
+  const bindings: ArrowBindingRecord[] = records.filter(r => isArrowBindingRecord(r));
+
+  // 4. Resolve bindings for each arrow
+  const arrowsWithBindings: ArrowWithBindings[] = [];
+
+  for (const arrow of arrows) {
+    // Find bindings where fromId === arrow.id
+    const arrowBindings = bindings.filter((b) => b.fromId === arrow.id);
+
+    const startBinding = arrowBindings.find((b) => b.props.terminal === "start");
+    const endBinding = arrowBindings.find((b) => b.props.terminal === "end");
+
+    // Only include arrows with both bindings
+    if (startBinding && endBinding) {
+      arrowsWithBindings.push({
+        id: arrow.id,
+        startShapeId: startBinding.toId,
+        endShapeId: endBinding.toId,
+        meta: arrow.meta,
+      });
+    }
+  }
+
+  return arrowsWithBindings;
 }
 
 /**
@@ -973,10 +959,33 @@ export async function expectArrowConnectsShapes(
 ): Promise<void> {
   const arrowsWithBindings = await getArrowsWithValidBindings(page);
 
+  // DEBUG LOGS
+  console.log('\n=== DEBUG expectArrowConnectsShapes ===');
+  console.log('Looking for connection:');
+  console.log('  startShapeId:', startShapeId);
+  console.log('  endShapeId:', endShapeId);
+  console.log('\nAll arrows found:', arrowsWithBindings.length);
+  
+  arrowsWithBindings.forEach((arrow, index) => {
+    console.log(`\nArrow ${index + 1}:`);
+    console.log('  arrow.id:', arrow.id);
+    console.log('  arrow.startShapeId:', arrow.startShapeId);
+    console.log('  arrow.endShapeId:', arrow.endShapeId);
+    console.log('  arrow.meta:', JSON.stringify(arrow.meta, null, 2));
+    console.log('  meta.parentId matches?', arrow.meta?.parentId === startShapeId);
+    console.log('  meta.childId matches?', arrow.meta?.childId === endShapeId);
+  });
+
   const matchingArrow = arrowsWithBindings.find(
     (arrow) =>
-      arrow.startShapeId === startShapeId && arrow.endShapeId === endShapeId,
+      arrow.meta?.parentId === startShapeId && arrow.meta.childId === endShapeId,
   );
+
+  console.log('\nMatching arrow found:', matchingArrow ? 'YES' : 'NO');
+  if (matchingArrow) {
+    console.log('Matching arrow details:', JSON.stringify(matchingArrow, null, 2));
+  }
+  console.log('=== END DEBUG ===\n');
 
   expect(matchingArrow).toBeDefined();
   expect(matchingArrow?.startShapeId).toBe(startShapeId);
@@ -1049,4 +1058,184 @@ export async function expectAllArrowsHaveValidBindings(
 
   expect(report.invalidCount).toBe(0);
   expect(report.validCount).toBe(report.totalCount);
+}
+
+// =============================================================================
+// Cascade Delete Helper Functions
+// =============================================================================
+
+/**
+ * Deletes currently selected shape(s) using keyboard shortcut.
+ * Uses platform-appropriate delete key (Delete on all platforms).
+ */
+export async function deleteShapeViaKeyboard(page: Page): Promise<void> {
+  await page.keyboard.press("Delete");
+  await page.waitForTimeout(200);
+}
+
+/**
+ * Selects multiple shapes by their test IDs using Shift+Click.
+ * 
+ * @param page - Playwright page
+ * @param testIds - Array of test IDs to select
+ */
+export async function selectShapes(
+  page: Page,
+  testIds: string[]
+): Promise<void> {
+  if (testIds.length === 0) return;
+
+  // Click first shape
+  await page.getByTestId(testIds[0]).click();
+
+  // Shift+Click remaining shapes
+  if (testIds.length > 1) {
+    await page.keyboard.down("Shift");
+    for (let i = 1; i < testIds.length; i++) {
+      await page.getByTestId(testIds[i]).click();
+    }
+    await page.keyboard.up("Shift");
+  }
+}
+
+/**
+ * Gets shape IDs from localStorage by shape type.
+ * 
+ * @param page - Playwright page
+ * @param type - Shape type (e.g., 'tweet', 'note', 'question', 'arrow')
+ * @returns Array of shape IDs matching the type
+ */
+export async function getShapeIdsByType(
+  page: Page,
+  type: string
+): Promise<string[]> {
+  const storageData = await page.evaluate(() =>
+    localStorage.getItem("gyul-state")
+  );
+
+  if (!storageData) return [];
+
+  interface ShapeRecord {
+    id?: string;
+    typeName?: string;
+    type?: string;
+  }
+
+  const parsed = JSON.parse(storageData);
+  const snapshot = parsed.state.state.canvases[0]?.snapshot;
+
+  if (!snapshot) return [];
+
+  const shapes = Object.values(snapshot.store as ShapeRecord[]).filter(
+    (r) => r.typeName === "shape" && r.type === type
+  );
+
+  return shapes.map((s) => s.id!).filter(Boolean);
+}
+
+/**
+ * Counts orphaned arrows (arrows with bindings to non-existent shapes).
+ * 
+ * An arrow is orphaned if:
+ * - Its start.boundShapeId references a deleted shape
+ * - Its end.boundShapeId references a deleted shape
+ * 
+ * @param page - Playwright page
+ * @returns Number of orphaned arrows found
+ */
+export async function getOrphanedArrowCount(page: Page): Promise<number> {
+  const storageData = await page.evaluate(() =>
+    localStorage.getItem("gyul-state")
+  );
+
+  if (!storageData) return 0;
+
+  interface ArrowRecord {
+    typeName?: string;
+    type?: string;
+    props?: {
+      start?: { type?: string; boundShapeId?: string };
+      end?: { type?: string; boundShapeId?: string };
+    };
+  }
+
+  interface ShapeRecord {
+    id?: string;
+    typeName?: string;
+    type?: string;
+  }
+
+  const parsed = JSON.parse(storageData);
+  const snapshot = parsed.state.state.canvases[0]?.snapshot;
+
+  if (!snapshot) return 0;
+
+  const storeRecords = Object.values(snapshot.store) as (ArrowRecord & ShapeRecord)[];
+
+  // Get all valid shape IDs (excluding arrows)
+  const validShapeIds = new Set(
+    storeRecords
+      .filter((r) => r.typeName === "shape" && r.type !== "arrow")
+      .map((r) => r.id)
+      .filter(Boolean)
+  );
+
+  // Find arrows
+  const arrows = storeRecords.filter(
+    (r) => r.typeName === "shape" && r.type === "arrow"
+  ) as ArrowRecord[];
+
+  let orphanedCount = 0;
+
+  for (const arrow of arrows) {
+    const startId = arrow.props?.start?.boundShapeId;
+    const endId = arrow.props?.end?.boundShapeId;
+
+    // Check if either binding references a non-existent shape
+    const startOrphaned = startId && !validShapeIds.has(startId);
+    const endOrphaned = endId && !validShapeIds.has(endId);
+
+    if (startOrphaned || endOrphaned) {
+      orphanedCount++;
+    }
+  }
+
+  return orphanedCount;
+}
+
+/**
+ * Verifies that a shape does not exist in the canvas.
+ * Checks both DOM visibility and localStorage.
+ * 
+ * @param page - Playwright page
+ * @param testId - Test ID of the shape to check
+ */
+export async function expectShapeNotExists(
+  page: Page,
+  testId: string
+): Promise<void> {
+  // Check DOM
+  await expect(page.getByTestId(testId)).not.toBeVisible();
+}
+
+/**
+ * Verifies that an arrow connecting two specific shapes does not exist.
+ * 
+ * @param page - Playwright page
+ * @param startShapeId - ID of the start shape
+ * @param endShapeId - ID of the end shape
+ */
+export async function expectArrowNotExists(
+  page: Page,
+  startShapeId: string,
+  endShapeId: string
+): Promise<void> {
+  const arrowsWithBindings = await getArrowsWithValidBindings(page);
+
+  const matchingArrow = arrowsWithBindings.find(
+    (arrow) =>
+      arrow.startShapeId === startShapeId && arrow.endShapeId === endShapeId
+  );
+
+  expect(matchingArrow).toBeUndefined();
 }

@@ -1,5 +1,7 @@
-import { Editor, createShapeId, type TLArrowShape, type TLArrowShapeProps, type TLShapeId, type TLUnknownShape } from 'tldraw'
+import { Editor, createShapeId, type TLShapeId } from 'tldraw'
 import type { ShapeType } from '../types/shapes'
+import type { ParentChildArrowMeta, ArrowBindingProps } from '../types/arrows'
+import { deleteShapeWithArrows } from './shapeDelete'
 
 /**
  * Calcula posição para child shape usando algoritmo de espiral.
@@ -55,7 +57,7 @@ export function checkArrowBindings(editor: Editor, arrowId: TLShapeId): {
   bindings: Array<{ terminal: string; toId: TLShapeId }>
 } {
   const arrow = editor.getShape(arrowId)
-  
+
   if (!arrow || arrow.type !== 'arrow') {
     return {
       hasStartBinding: false,
@@ -70,7 +72,7 @@ export function checkArrowBindings(editor: Editor, arrowId: TLShapeId): {
   // Buscar bindings diretamente no store (método mais confiável)
   // editor.getBindingsFromShape() retorna todos os bindings onde fromId === arrowId
   const arrowBindings = editor.getBindingsFromShape(arrowId, 'arrow')
-  
+
   const bindingDetails = arrowBindings.map((binding) => ({
     terminal: (binding.props as any).terminal || 'unknown',
     toId: binding.toId,
@@ -127,9 +129,16 @@ export function createArrow(
   }
 
   // Step 1: Create arrow with numeric coordinates and metadata
+  const meta: ParentChildArrowMeta = {
+    isParentChildConnection: true,
+    parentId: parentId,
+    childId: childId,
+    createdBy: 'system',
+  }
+
   const payloadArrowShape = {
     id: arrowId,
-    type: 'arrow',
+    type: 'arrow' as const,
     props: {
       start: {
         x: parentBounds.center.x,
@@ -141,64 +150,47 @@ export function createArrow(
       },
       color: 'grey',
       size: 's',
-      arrowheadStart: 'none',
-      arrowheadEnd: 'none',
+      arrowheadStart: 'none' as const,
+      arrowheadEnd: 'none' as const,
     },
-    meta: {
-      // Custom metadata for parent-child connection arrows
-      isParentChildConnection: true,
-      parentId: parentId,
-      childId: childId,
-      createdBy: 'system',
-    },
+    meta: meta as Record<string, unknown>,
   }
 
-  editor.createShape(payloadArrowShape)
+  editor.createShape(payloadArrowShape as any)
 
   // Step 2: Create bindings (separate records) so arrow follows shapes
   // Binding for start (parent)
+  const startBindingProps: ArrowBindingProps = {
+    terminal: 'start',
+    normalizedAnchor: { x: 0.5, y: 0.5 }, // center
+    isPrecise: false,
+    isExact: false,
+  }
+
   editor.createBinding({
     type: 'arrow',
     fromId: arrowId,
     toId: parentId,
-    props: {
-      terminal: 'start',
-      normalizedAnchor: { x: 0.5, y: 0.5 }, // center
-      isPrecise: false,
-      isExact: false,
-    },
+    props: startBindingProps,
   })
 
   // Binding for end (child)
+  const endBindingProps: ArrowBindingProps = {
+    terminal: 'end',
+    normalizedAnchor: { x: 0.5, y: 0.5 }, // center
+    isPrecise: false,
+    isExact: false,
+  }
+
   editor.createBinding({
     type: 'arrow',
     fromId: arrowId,
     toId: childId,
-    props: {
-      terminal: 'end',
-      normalizedAnchor: { x: 0.5, y: 0.5 }, // center
-      isPrecise: false,
-      isExact: false,
-    },
+    props: endBindingProps,
   })
 
   // Send arrow to back so it doesn't cover shapes
   editor.sendToBack([arrowId])
-
-  // Verificar se bindings foram criados corretamente (opcional - útil para debug)
-  // Fazer isso após um tick para dar tempo do store atualizar
-  if (import.meta.env.DEV) {
-    requestAnimationFrame(() => {
-      const bindingStatus = checkArrowBindings(editor, arrowId)
-      console.log('Arrow bindings created:', {
-        arrowId,
-        hasBothBindings: bindingStatus.hasBothBindings,
-        start: bindingStatus.startShapeId,
-        end: bindingStatus.endShapeId,
-        allBindings: bindingStatus.bindings,
-      })
-    })
-  }
 
   return arrowId
 }
@@ -259,14 +251,14 @@ export function createChildShape(
   } catch (error) {
     console.error('Failed to create child shape:', error)
 
-    // Rollback: tentar deletar shape se foi criado
+    // Rollback: deletar shape E arrow (se foram criados) usando cascade delete
     try {
       const createdChild = editor.getShape(childId)
       if (createdChild) {
-        editor.deleteShape(childId)
+        deleteShapeWithArrows(editor, childId)
       }
-    } catch {
-      // Ignore rollback errors
+    } catch (rollbackError) {
+      console.error('Rollback failed:', rollbackError)
     }
 
     return null

@@ -1,4 +1,4 @@
-import { useState, useCallback, type KeyboardEvent } from "react";
+import { useState, useCallback, useRef, useEffect, type KeyboardEvent } from "react";
 import { useEditor } from "tldraw";
 import type { QuestionShape } from "../../types/shapes";
 import { useAskQuestion } from "../../hooks/useAiResponse";
@@ -34,7 +34,17 @@ export function QuestionCard({ shape }: QuestionCardProps) {
   const { mutate: askQuestion } = useAskQuestion();
   const context = useShapeContext(shape.id);
   const [prompt, setPrompt] = useState(shape.props.prompt);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const autoHeightRef = useAutoHeight(shape.id, "question", MIN_HEIGHT);
+
+  // Auto-focus textarea when in draft state
+  useEffect(() => {
+    if (shape.props.status === "draft" && textareaRef.current) {
+      requestAnimationFrame(() => {
+        textareaRef.current?.focus();
+      });
+    }
+  }, [shape.props.status]);
 
   const trimmedPrompt = prompt.trim();
   const isValidLength =
@@ -180,6 +190,7 @@ export function QuestionCard({ shape }: QuestionCardProps) {
             <div data-testid="question-prompt-section">
               <Interactive>
                 <textarea
+                  ref={textareaRef}
                   data-testid="question-prompt-input"
                   placeholder="Escreva sua pergunta..."
                   value={prompt}
