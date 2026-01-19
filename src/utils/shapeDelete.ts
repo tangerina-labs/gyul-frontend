@@ -1,12 +1,6 @@
 import { Editor, type TLShapeId } from 'tldraw'
 
 /**
- * Feature flag for cascade delete functionality.
- * Set to false to disable cascade delete and revert to default tldraw behavior.
- */
-export const ENABLE_CASCADE_DELETE = true
-
-/**
  * Encontra todas as arrows conectadas aos shapes especificados.
  * 
  * IMPORTANTE: No tldraw, bindings são records SEPARADOS no store, não estão

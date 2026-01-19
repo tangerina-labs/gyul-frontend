@@ -10,7 +10,7 @@ import "tldraw/tldraw.css";
 import { useAppStore } from "../stores/appStore";
 import { CanvasUI } from "../components/canvas/CanvasUI";
 import { customShapeUtils } from "../shapes";
-import { deleteShapesWithArrows, ENABLE_CASCADE_DELETE } from "../utils/shapeDelete";
+import { deleteShapesWithArrows } from "../utils/shapeDelete";
 
 // Hide unnecessary tldraw UI components and add custom UI
 const components: TLComponents = {
@@ -187,7 +187,7 @@ export function CanvasView() {
         components={components}
         cameraOptions={cameraOptions}
         shapeUtils={customShapeUtils}
-        overrides={ENABLE_CASCADE_DELETE ? createCascadeDeleteOverrides() : undefined}
+        overrides={createCascadeDeleteOverrides()}
       />
     </div>
   );
