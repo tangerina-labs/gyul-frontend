@@ -16,6 +16,7 @@ export { ShapeHandle } from "./shape-handle";
 export { TweetBuilder } from "./tweet-builder";
 export { QuestionBuilder } from "./question-builder";
 export { NoteBuilder } from "./note-builder";
+export { ShapeHarness } from "./shape-harness";
 export type {
   ShapeHandle as IShapeHandle,
   TweetBuilder as ITweetBuilder,
@@ -1215,4 +1216,115 @@ export async function expectArrowNotExists(
   );
 
   expect(matchingArrow).toBeUndefined();
+}
+
+// =============================================================================
+// Transaction Pattern Test Helpers
+// =============================================================================
+
+/**
+ * Calls the transactional createChildShape function via page.evaluate.
+ * This exposes the function to E2E tests in an isolated canvas.
+ * 
+ * @param page - Playwright page
+ * @param parentId - ID of the parent shape
+ * @param childType - Type of child shape to create
+ * @returns Promise with { childId, arrowId } or null if failed
+ */
+export async function callTransactionalCreate(
+  page: Page,
+  parentId: string,
+  childType: 'note' | 'question' | 'tweet'
+): Promise<{ childId: string; arrowId: string } | null> {
+  return await page.evaluate(
+    async ([pId, cType]) => {
+      const editor = (window as any).__tldraw_editor__;
+      if (!editor) throw new Error('Editor not found');
+
+      // Import the transactional function
+      // Note: In E2E tests, we need to inline the function or expose it globally
+      // For now, we'll use the regular createChildShape and enhance it
+      // The actual transaction pattern will be tested by importing the module
+      
+      // This is a placeholder - actual implementation will import from the module
+      throw new Error('callTransactionalCreate needs to be implemented with proper module import');
+    },
+    [parentId, childType] as const
+  );
+}
+
+/**
+ * Gets the flowId of a shape.
+ * 
+ * @param page - Playwright page
+ * @param shapeId - ID of the shape
+ * @returns Promise with flowId or null if not found
+ */
+export async function getShapeFlowId(
+  page: Page,
+  shapeId: string
+): Promise<string | null> {
+  return await page.evaluate((sId) => {
+    const editor = (window as any).__tldraw_editor__;
+    if (!editor) return null;
+
+    const shape = editor.getShape(sId);
+    if (!shape) return null;
+
+    return shape.props.flowId || null;
+  }, shapeId);
+}
+
+/**
+ * Validates arrow bindings via editor API.
+ * 
+ * @param page - Playwright page
+ * @param arrowId - ID of the arrow
+ * @returns Promise with binding status
+ */
+export async function validateArrowBindingsE2E(
+  page: Page,
+  arrowId: string
+): Promise<{ hasStart: boolean; hasEnd: boolean; hasBothBindings: boolean }> {
+  return await page.evaluate((aId) => {
+    const editor = (window as any).__tldraw_editor__;
+    if (!editor) return { hasStart: false, hasEnd: false, hasBothBindings: false };
+
+    const arrow = editor.getShape(aId);
+    if (!arrow || arrow.type !== 'arrow') {
+      return { hasStart: false, hasEnd: false, hasBothBindings: false };
+    }
+
+    // Get bindings from store
+    const bindings = editor.getBindingsFromShape(aId, 'arrow');
+    
+    const startBinding = bindings.find((b: any) => b.props.terminal === 'start');
+    const endBinding = bindings.find((b: any) => b.props.terminal === 'end');
+
+    return {
+      hasStart: !!startBinding,
+      hasEnd: !!endBinding,
+      hasBothBindings: !!startBinding && !!endBinding,
+    };
+  }, arrowId);
+}
+
+/**
+ * Waits for the tldraw editor to be mounted and available.
+ * Should be called before using editor API directly in tests.
+ * 
+ * @param page - Playwright page
+ * @param timeout - Maximum time to wait in ms (default: 5000)
+ */
+export async function waitForEditorReady(page: Page, timeout = 5000): Promise<void> {
+  await page.waitForFunction(
+    () => {
+      const editor = (window as any).__tldraw_editor__;
+      return editor !== undefined;
+    },
+    { timeout }
+  );
+  
+  // Extra safety: wait a bit for editor to fully initialize
+  await page.waitForTimeout(100);
 }
