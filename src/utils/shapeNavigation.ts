@@ -9,16 +9,15 @@ export function getAncestors(editor: Editor, shapeId: TLShapeId): TLShape[] {
 
   while (true) {
     // Encontrar arrow que aponta para o shape atual (end binding)
-    const parentArrow = editor.getCurrentPageShapes().find(
-      (s) =>
-        s.type === 'arrow' &&
-        s.props.end?.type === 'binding' &&
-        s.props.end.boundShapeId === currentId
-    )
+    const parentArrow = editor.getCurrentPageShapes().find((s) => {
+      if (s.type !== 'arrow') return false
+      const props = s.props as any
+      return props.end?.type === 'binding' && props.end.boundShapeId === currentId
+    })
 
     if (!parentArrow) break // Chegou na raiz
 
-    const parentId = parentArrow.props.start?.boundShapeId
+    const parentId = (parentArrow.props as any).start?.boundShapeId
     if (!parentId) break
 
     const parent = editor.getShape(parentId)
@@ -36,12 +35,11 @@ export function getAncestors(editor: Editor, shapeId: TLShapeId): TLShape[] {
  * Usado para validação de deleção (feature futura).
  */
 export function isLeafShape(editor: Editor, shapeId: TLShapeId): boolean {
-  const arrows = editor.getCurrentPageShapes().filter(
-    (s) =>
-      s.type === 'arrow' &&
-      s.props.start?.type === 'binding' &&
-      s.props.start.boundShapeId === shapeId
-  )
+  const arrows = editor.getCurrentPageShapes().filter((s) => {
+    if (s.type !== 'arrow') return false
+    const props = s.props as any
+    return props.start?.type === 'binding' && props.start.boundShapeId === shapeId
+  })
   return arrows.length === 0
 }
 
@@ -50,5 +48,5 @@ export function isLeafShape(editor: Editor, shapeId: TLShapeId): boolean {
  */
 export function getShapeFlowId(editor: Editor, shapeId: TLShapeId): string | null {
   const shape = editor.getShape(shapeId)
-  return shape?.props?.flowId ?? null
+  return (shape?.props as any)?.flowId ?? null
 }

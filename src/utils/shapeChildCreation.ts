@@ -96,12 +96,11 @@ export function checkArrowBindings(editor: Editor, arrowId: TLShapeId): {
  * Conta quantos filhos um shape tem (através de arrows saindo dele).
  */
 export function getChildrenCount(editor: Editor, parentId: TLShapeId): number {
-  const arrows = editor.getCurrentPageShapes().filter(
-    (s) =>
-      s.type === 'arrow' &&
-      s.props.start?.type === 'binding' &&
-      s.props.start.boundShapeId === parentId
-  )
+  const arrows = editor.getCurrentPageShapes().filter((s) => {
+    if (s.type !== 'arrow') return false
+    const props = s.props as any
+    return props.start?.type === 'binding' && props.start.boundShapeId === parentId
+  })
   return arrows.length
 }
 
@@ -213,12 +212,12 @@ export function createChildShape(
   }
 
   // Obter flowId do pai (ou criar novo se não existir)
-  const parentFlowId = parent.props.flowId || crypto.randomUUID()
+  const parentFlowId = (parent.props as any).flowId || crypto.randomUUID()
 
   // Calcular posição do filho
   const childrenCount = getChildrenCount(editor, parentId)
   const childWidth = childType === 'note' ? 300 : 400
-  const position = calculateChildPosition(parent, childrenCount, childWidth)
+  const position = calculateChildPosition(parent as any, childrenCount, childWidth)
 
   // Criar ID do filho
   const childId = createShapeId()

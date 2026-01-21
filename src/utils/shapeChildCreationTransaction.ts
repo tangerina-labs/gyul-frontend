@@ -83,12 +83,12 @@ export async function createChildShapeTransactional(
     // === FASE 2: PREPARAÇÃO ===
     // FlowId: herdar do parent ou criar novo
     // IMPORTANTE: Parent NUNCA é atualizado aqui (responsabilidade do componente)
-    const parentFlowId = parent.props.flowId || crypto.randomUUID()
+    const parentFlowId = (parent.props as any).flowId || crypto.randomUUID()
 
     // Calcular posição do child
     const childrenCount = getChildrenCount(editor, parentId)
     const childWidth = childType === 'note' ? 300 : 400
-    const position = calculateChildPosition(parent, childrenCount, childWidth)
+    const position = calculateChildPosition(parent as any, childrenCount, childWidth)
 
     const childId = createShapeId()
 

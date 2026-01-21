@@ -63,7 +63,7 @@ function createCascadeDeleteOverrides() {
         ...actions,
         'delete': {
           ...actions['delete'],
-          onSelect(source: any) {
+          onSelect() {
             const selectedIds = _editor.getSelectedShapeIds()
             if (selectedIds.length > 0) {
               // Use cascade delete instead of default delete

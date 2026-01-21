@@ -51,7 +51,6 @@ export function ShapeTypeMenu({
   position,
   onSelect,
   onClose,
-  parentShapeId,
 }: ShapeTypeMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
