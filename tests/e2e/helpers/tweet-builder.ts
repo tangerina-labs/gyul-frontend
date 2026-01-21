@@ -30,7 +30,6 @@ export class TweetBuilder implements ITweetBuilder {
     parentTestId?: string,
     parentLocator?: any
   ) {
-    // Gerar UUID único para esta criação
     this.creationId = crypto.randomUUID();
     
     if (parentId && parentTestId) {
@@ -86,44 +85,34 @@ export class TweetBuilder implements ITweetBuilder {
     this.assertNotBuilt();
     this.state.hasBuilt = true;
 
-    // If this is a child, perform the UI clicks to create it
     if (this.state.isChild && this.state.parentId) {
       await this.performChildCreation();
     } else {
-      // Create the shape via menu
       await addShapeViaMenu(this.page, "Tweet", this.state.position);
     }
 
-    // Injetar metadata de teste APÓS criação
     await this.injectTestMetadata();
 
-    // Load tweet if URL provided
+    const shapeId = await getShapeIdByTestCreationId(this.page, this.creationId);
+    const testId = getTestIdFromType("tweet");
+    const specificLocator = this.page.locator(`[data-testid="${testId}"][data-shape-id="${shapeId}"]`);
+
     if (this.url) {
       if (this.useEnter) {
-        await loadTweetViaEnter(this.page, this.url);
+        await loadTweetViaEnter(this.page, this.url, specificLocator);
       } else {
-        await loadTweet(this.page, this.url);
+        await loadTweet(this.page, this.url, specificLocator);
       }
     }
 
-    // Fit view if requested
     if (this.state.shouldFitView) {
       await fitCanvasView(this.page);
     }
 
-    // Buscar shape pelo creation ID
-    const shapeId = await getShapeIdByTestCreationId(this.page, this.creationId);
-    const testId = getTestIdFromType("tweet");
-
-    // If this was a child, wait a bit more for arrow creation
     if (this.state.isChild) {
       await this.page.waitForTimeout(200);
     }
 
-    // Create a specific locator using the shapeId
-    const specificLocator = this.page.locator(`[data-testid="${testId}"][data-shape-id="${shapeId}"]`);
-
-    // Return handle
     return new ShapeHandle({
       id: shapeId,
       testId,
@@ -141,44 +130,31 @@ export class TweetBuilder implements ITweetBuilder {
       throw new Error("Parent test ID not set for child builder");
     }
     
-    // Use specific parent locator if available, otherwise fallback to generic testId
     const parentCard = this.parentLocator || this.page.getByTestId(this.parentTestId);
     await parentCard.scrollIntoViewIfNeeded();
     await parentCard.waitFor({ state: "visible" });
     
-    // Click parent to focus
     await parentCard.click();
     await this.page.waitForTimeout(100);
 
-    // Click add-child button within the parent card
     const addChildBtnId = this.parentTestId.replace("-card", "-add-child-btn");
     const addChildBtn = parentCard.getByTestId(addChildBtnId);
     await addChildBtn.waitFor({ state: "visible" });
     await addChildBtn.click({ force: true });
 
-    // Wait for menu to appear
     await this.page.getByTestId("shape-type-menu").waitFor({ state: "visible" });
-    
-    // Select type from menu
     await this.page.getByTestId("menu-option-tweet").click();
-
-    // Wait for menu to close and shape to be created
     await this.page.getByTestId("shape-type-menu").waitFor({ state: "hidden" });
     await this.page.waitForTimeout(300);
   }
 
-  /**
-   * Injeta metadata de teste na shape mais recente do tipo
-   */
   private async injectTestMetadata(): Promise<void> {
     await this.page.evaluate((creationId) => {
       const editor = (window as any).__tldraw_editor__;
       if (!editor) return;
       
-      // Pegar todas as shapes do canvas atual
       const shapes = editor.getCurrentPageShapes();
       
-      // Filtrar por tipo 'tweet' e pegar a que não tem _testCreationId
       const targetShape = shapes
         .filter((s: any) => s.type === 'tweet')
         .find((s: any) => !s.meta?._testCreationId);
@@ -188,7 +164,6 @@ export class TweetBuilder implements ITweetBuilder {
         return;
       }
       
-      // Atualizar shape com metadata de teste
       editor.updateShape({
         id: targetShape.id,
         type: targetShape.type,
@@ -199,7 +174,6 @@ export class TweetBuilder implements ITweetBuilder {
       });
     }, this.creationId);
     
-    // Aguardar persistência
     await this.page.waitForTimeout(100);
   }
 

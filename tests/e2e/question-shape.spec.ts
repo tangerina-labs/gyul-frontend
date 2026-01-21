@@ -8,6 +8,8 @@ import {
   getQuestionCardCount,
   clickUndo,
   ShapeBuilder,
+  clickZoomOut,
+  panCanvas,
 } from './helpers/test-utils'
 
 test.describe('Question Shape', () => {
@@ -16,11 +18,8 @@ test.describe('Question Shape', () => {
     await createCanvasViaUI(page, 'Question Test')
   })
 
-  // ===========================================================================
-  // Estado Draft
-  // ===========================================================================
   test.describe('Estado Draft', () => {
-    test('TEST-QN-001: textarea focado ao criar QuestionShape', async ({ page }) => {
+    test('should automatically focus textarea when creating question shape', async ({ page }) => {
       await addShapeViaMenu(page, 'Question')
 
       const textarea = page.getByTestId('question-prompt-input')
@@ -28,14 +27,14 @@ test.describe('Question Shape', () => {
       await expect(textarea).toBeFocused()
     })
 
-    test('TEST-QN-002: placeholder "Escreva sua pergunta..." visivel', async ({ page }) => {
+    test('should display placeholder text in textarea when empty', async ({ page }) => {
       await addShapeViaMenu(page, 'Question')
 
       const textarea = page.getByTestId('question-prompt-input')
       await expect(textarea).toHaveAttribute('placeholder', 'Escreva sua pergunta...')
     })
 
-    test('TEST-QN-003: Enter adiciona nova linha sem submeter', async ({ page }) => {
+    test('should add new line with Enter key without submitting question', async ({ page }) => {
       await addShapeViaMenu(page, 'Question')
 
       const textarea = page.getByTestId('question-prompt-input')
@@ -53,7 +52,7 @@ test.describe('Question Shape', () => {
       await expect(page.getByTestId('question-ai-badge')).not.toBeVisible()
     })
 
-    test('TEST-QN-004: Ctrl+Enter submete a pergunta', async ({ page }) => {
+    test('should submit question with Ctrl+Enter keyboard shortcut', async ({ page }) => {
       await addShapeViaMenu(page, 'Question')
 
       await page.getByTestId('question-prompt-input').fill('Minha pergunta via atalho?')
@@ -62,7 +61,7 @@ test.describe('Question Shape', () => {
       await expect(page.getByTestId('question-ai-badge')).toBeVisible({ timeout: 10000 })
     })
 
-    test('TEST-QN-005: Cmd+Enter submete a pergunta (macOS)', async ({ page }) => {
+    test('should submit question with Cmd+Enter keyboard shortcut on macOS', async ({ page }) => {
       await addShapeViaMenu(page, 'Question')
 
       await page.getByTestId('question-prompt-input').fill('Pergunta via Cmd+Enter?')
@@ -71,7 +70,7 @@ test.describe('Question Shape', () => {
       await expect(page.getByTestId('question-ai-badge')).toBeVisible({ timeout: 10000 })
     })
 
-    test('TEST-QN-006: botao Submeter visivel com indicacao de atalho', async ({ page }) => {
+    test('should display submit button with keyboard shortcut hint', async ({ page }) => {
       await addShapeViaMenu(page, 'Question')
 
       const submitBtn = page.getByTestId('question-submit-btn')
@@ -80,14 +79,14 @@ test.describe('Question Shape', () => {
       await expect(submitBtn).toContainText('Ctrl+Enter')
     })
 
-    test('TEST-QN-007: botao Submeter desabilitado com prompt vazio', async ({ page }) => {
+    test('should disable submit button when prompt is empty', async ({ page }) => {
       await addShapeViaMenu(page, 'Question')
 
       const submitBtn = page.getByTestId('question-submit-btn')
       await expect(submitBtn).toBeDisabled()
     })
 
-    test('TEST-QN-008: botao Submeter desabilitado com menos de 3 caracteres', async ({
+    test('should disable submit button with less than 3 characters and enable with 3 or more', async ({
       page,
     }) => {
       await addShapeViaMenu(page, 'Question')
@@ -102,7 +101,7 @@ test.describe('Question Shape', () => {
       await expect(submitBtn).toBeEnabled()
     })
 
-    test('TEST-QN-009: botao Submeter desabilitado com mais de 1000 caracteres', async ({
+    test('should disable submit button when prompt exceeds 1000 characters', async ({
       page,
     }) => {
       await addShapeViaMenu(page, 'Question')
@@ -120,7 +119,7 @@ test.describe('Question Shape', () => {
       await expect(submitBtn).toBeDisabled()
     })
 
-    test('TEST-QN-010: contador de caracteres atualiza em tempo real', async ({ page }) => {
+    test('should update character counter in real-time and show red when exceeding limit', async ({ page }) => {
       await addShapeViaMenu(page, 'Question')
 
       const textarea = page.getByTestId('question-prompt-input')
@@ -135,7 +134,7 @@ test.describe('Question Shape', () => {
       await expect(charCount).toHaveClass(/text-red/)
     })
 
-    test('TEST-QN-011: whitespace puro nao habilita botao Submeter', async ({ page }) => {
+    test('should keep submit button disabled when prompt contains only whitespace', async ({ page }) => {
       await addShapeViaMenu(page, 'Question')
 
       const textarea = page.getByTestId('question-prompt-input')
@@ -151,20 +150,14 @@ test.describe('Question Shape', () => {
       await expect(submitBtn).toBeDisabled()
     })
 
-    test('TEST-QN-012: botao [+] nao visivel no estado draft', async ({ page }) => {
+    test('should hide add child button in draft state', async ({ page }) => {
       await addShapeViaMenu(page, 'Question')
 
       await expect(page.getByTestId('question-add-child-btn')).not.toBeVisible()
     })
   })
 
-  // ===========================================================================
-  // Estado Loading
-  // ===========================================================================
   test.describe('Estado Loading', () => {
-    // Note: These tests require special configuration with page reload
-    // They are skipped for now as they need delay to be visible
-    // The loading state is very brief in test mode (0ms delay)
 
     test.skip('TEST-QN-013: prompt fica readonly durante loading', async ({ page }) => {
       // This test requires real delay which is disabled in test mode
@@ -205,11 +198,8 @@ test.describe('Question Shape', () => {
     })
   })
 
-  // ===========================================================================
-  // Estado Done
-  // ===========================================================================
   test.describe('Estado Done', () => {
-    test('TEST-QN-017: prompt e resposta visiveis com divisor no estado done', async ({
+    test('should display prompt, divider, and response in done state', async ({
       page,
     }) => {
       await addShapeViaMenu(page, 'Question')
@@ -222,7 +212,7 @@ test.describe('Question Shape', () => {
       await expect(page.getByTestId('question-response-text')).toBeVisible()
     })
 
-    test('TEST-QN-018: badge AI visivel com estilo verde no estado done', async ({
+    test('should display green AI badge in done state', async ({
       page,
     }) => {
       await addShapeViaMenu(page, 'Question')
@@ -234,7 +224,7 @@ test.describe('Question Shape', () => {
       await expect(badge).toHaveClass(/bg-green/)
     })
 
-    test('TEST-QN-019: botao [+] visivel no estado done', async ({ page }) => {
+    test('should show add child button in done state', async ({ page }) => {
       await addShapeViaMenu(page, 'Question')
       await submitQuestion(page, 'Pergunta para testar botao [+]?')
 
@@ -242,7 +232,7 @@ test.describe('Question Shape', () => {
       await expect(addChildBtn).toBeVisible()
     })
 
-    test('TEST-QN-020: resposta exibe conteudo completo sem overflow (shape cresce)', async ({ page }) => {
+    test('should expand shape to display full response content without overflow', async ({ page }) => {
       await addShapeViaMenu(page, 'Question')
       await submitQuestion(page, 'Explique em muitos detalhes todo o contexto')
 
@@ -259,7 +249,7 @@ test.describe('Question Shape', () => {
       expect(hasNoOverflowHidden).toBe(true)
     })
 
-    test('TEST-QN-021: quebras de linha preservadas na resposta', async ({ page }) => {
+    test('should preserve line breaks in response text', async ({ page }) => {
       await addShapeViaMenu(page, 'Question')
       // Usar prompt longo para garantir resposta com multiplas linhas
       await submitQuestion(
@@ -277,7 +267,7 @@ test.describe('Question Shape', () => {
       expect(height).toBeGreaterThan(20)
     })
 
-    test('TEST-QN-022: botao "Ver mais" para respostas longas', async ({ page }) => {
+    test('should show expandable toggle for long responses', async ({ page }) => {
       const question = await ShapeBuilder.question(page)
         .submit('Explique em detalhes extensos o significado completo de tudo isso com muita profundidade por favor')
         .build()
@@ -292,7 +282,7 @@ test.describe('Question Shape', () => {
         await toggle.click()
         await fitCanvasView(page)
         await expect(toggle).toContainText('Ver menos')
-        
+
         await toggle.click()
         await fitCanvasView(page)
         await expect(toggle).toContainText('Ver mais')
@@ -300,14 +290,7 @@ test.describe('Question Shape', () => {
     })
   })
 
-  // ===========================================================================
-  // Estado Error
-  // ===========================================================================
   test.describe('Estado Error', () => {
-    // Note: Error state tests require injecting __FORCE_AI_ERROR__ flag
-    // This needs to be done before the app loads, which requires page.addInitScript
-    // followed by navigation. These tests are skipped for now as they need
-    // special setup that conflicts with the beforeEach hook.
 
     test.skip('TEST-QN-023: mensagem de erro visivel quando AI falha', async ({ page }) => {
       // Requires __FORCE_AI_ERROR__ flag injection before app load
@@ -355,11 +338,8 @@ test.describe('Question Shape', () => {
     })
   })
 
-  // ===========================================================================
-  // Standalone (sem contexto)
-  // ===========================================================================
   test.describe('Standalone', () => {
-    test('TEST-QN-030: QuestionShape standalone funciona sem contexto', async ({
+    test('should work as standalone shape without additional context', async ({
       page,
     }) => {
       await addShapeViaMenu(page, 'Question')
@@ -370,11 +350,8 @@ test.describe('Question Shape', () => {
     })
   })
 
-  // ===========================================================================
-  // Fluxos Completos
-  // ===========================================================================
   test.describe('Fluxos Completos', () => {
-    test('TEST-QN-037: fluxo completo de criacao e submissao', async ({ page }) => {
+    test('should complete full flow from creation to done state with all elements visible', async ({ page }) => {
       // Cria question via menu
       await addShapeViaMenu(page, 'Question')
 
@@ -392,27 +369,27 @@ test.describe('Question Shape', () => {
       await expect(page.getByTestId('question-add-child-btn')).toBeVisible()
     })
 
-    test('TEST-QN-038: multiplas questions podem coexistir no canvas', async ({ page }) => {
-      // Cria primeira question
-      await addShapeViaMenu(page, 'Question', { x: 200, y: 200 })
-      await submitQuestion(page, 'Primeira pergunta?')
+    test('should allow multiple question shapes to coexist on canvas', async ({ page }) => {
+      await ShapeBuilder.question(page)
+        .atPosition(200, 200)
+        .submit('Primeira pergunta?')
+        .build()
 
-      // Cria segunda question
-      await addShapeViaMenu(page, 'Question', { x: 700, y: 200 })
-      await submitQuestion(page, 'Segunda pergunta?')
+      await panCanvas(page, -800, 0)
 
-      // Verifica que existem 2 questions
+      await ShapeBuilder.question(page)
+        .submit('Segunda pergunta?')
+        .build()
+
+      await fitCanvasView(page)
+
       const count = await getQuestionCardCount(page)
       expect(count).toBe(2)
 
-      // Ambas devem ter badges AI
       await expect(page.getByTestId('question-ai-badge')).toHaveCount(2)
     })
   })
 
-  // ===========================================================================
-  // Undo/Redo
-  // ===========================================================================
   test.describe('Undo/Redo', () => {
     test('undo remove question criada', async ({ page }) => {
       await addShapeViaMenu(page, 'Question')
@@ -429,9 +406,6 @@ test.describe('Question Shape', () => {
     })
   })
 
-  // ===========================================================================
-  // Menu de Criacao
-  // ===========================================================================
   test.describe('Menu de Criacao', () => {
     test('opcao Question esta habilitada no menu', async ({ page }) => {
       // Click "Novo Fluxo" button
@@ -464,11 +438,8 @@ test.describe('Question Shape', () => {
     })
   })
 
-  // ===========================================================================
-  // Qualidade
-  // ===========================================================================
   test.describe('Qualidade', () => {
-    test('TEST-QN-042: sem erros no console durante interacoes normais', async ({
+    test('should not produce console errors during normal interactions', async ({
       page,
     }) => {
       const consoleErrors: string[] = []
@@ -495,9 +466,6 @@ test.describe('Question Shape', () => {
     })
   })
 
-  // ===========================================================================
-  // Fit View
-  // ===========================================================================
   test.describe('Fit View', () => {
     test('fit view centra question no canvas', async ({ page }) => {
       await addShapeViaMenu(page, 'Question')

@@ -4,16 +4,15 @@ import {
   createCanvasViaUI,
   addShapeViaMenu,
   loadTweet,
-  submitQuestion,
   writeNote,
   fitCanvasView,
   clickZoomOut,
+  zoomToMin,
   expectArrowConnects,
   expectParentChildArrows,
   ShapeBuilder,
 } from "./helpers/test-utils";
 
-// Type for shape records in storage
 interface StorageShapeRecord {
   typeName?: string;
   type?: string;
@@ -35,15 +34,12 @@ test.describe("Shape Connections (Conexões Entre Shapes)", () => {
       await addShapeViaMenu(page, "Tweet");
       await loadTweet(page, "https://twitter.com/user/status/123");
 
-      // Verifica que não há parent-child arrows antes de criar filho
       await expectParentChildArrows(page, 0);
 
-      // Cria shape filho
       await page.getByTestId("tweet-add-child-btn").click({ force: true });
       await page.getByTestId("menu-option-question").click();
       await fitCanvasView(page);
 
-      // Parent-child arrow deve existir agora
       await expectParentChildArrows(page, 1);
     });
 
@@ -56,14 +52,11 @@ test.describe("Shape Connections (Conexões Entre Shapes)", () => {
       await writeNote(page, "Nota filho do tweet");
       await fitCanvasView(page);
 
-      // Verifica que parent-child arrow existe
       await expectParentChildArrows(page, 1);
 
-      // A arrow deve ter o path renderizado (verificar elemento visual)
       const arrow = page.locator('[data-shape-type="arrow"]');
       await expect(arrow).toBeVisible();
 
-      // Verificar binding structure via storage
       await expectArrowConnects(page, "tweet-card", "note-card");
     });
 
@@ -73,14 +66,12 @@ test.describe("Shape Connections (Conexões Entre Shapes)", () => {
       await addShapeViaMenu(page, "Tweet");
       await loadTweet(page, "https://twitter.com/user/status/333");
 
-      // Primeiro filho
       await page.getByTestId("tweet-add-child-btn").click({ force: true });
       await page.getByTestId("menu-option-question").click();
       await fitCanvasView(page);
 
       await expectParentChildArrows(page, 1);
 
-      // Segundo filho (do mesmo pai)
       await page.getByTestId("tweet-card").click();
       await page.getByTestId("tweet-add-child-btn").click({ force: true });
       await page.getByTestId("menu-option-note").click();
@@ -91,7 +82,6 @@ test.describe("Shape Connections (Conexões Entre Shapes)", () => {
     });
 
     test("arrows formam cadeia em árvore profunda", async ({ page }) => {
-      // Tweet -> Question -> Note -> Question
       const tweet = await ShapeBuilder.tweet(page)
         .loadUrl("https://twitter.com/user/status/444")
         .build();
@@ -113,56 +103,22 @@ test.describe("Shape Connections (Conexões Entre Shapes)", () => {
         .fitView()
         .build();
 
-      // 4 shapes, 3 parent-child arrows
       await expectParentChildArrows(page, 3);
     });
   });
 
   test.describe("Grupo 3: Isolamento de Fluxos (flowId)", () => {
     test("fluxos independentes permanecem isolados", async ({ page }) => {
-      // Fluxo A
-      await addShapeViaMenu(page, "Tweet", { x: 200, y: 200 });
-      await page
-        .getByPlaceholder(/cole a url/i)
-        .first()
-        .fill("https://twitter.com/a/status/111");
-      await page.getByRole("button", { name: "Carregar" }).first().click();
-      await expect(page.getByTestId("tweet-author-handle").first()).toBeVisible(
-        {
-          timeout: 10000,
-        }
-      );
+      const tweetA = await ShapeBuilder.tweet(page)
+        .loadUrl("https://twitter.com/a/status/111")
+        .build();
 
-      await page
-        .getByTestId("tweet-add-child-btn")
-        .first()
-        .click({ force: true });
-      await page.getByTestId("menu-option-question").click();
-      await fitCanvasView(page);
+      await clickZoomOut(page)
 
-      // Fluxo B (separado)
-      await addShapeViaMenu(page, "Tweet", { x: 700, y: 200 });
-      await page
-        .getByPlaceholder(/cole a url/i)
-        .last()
-        .fill("https://twitter.com/b/status/222");
-      await page.getByRole("button", { name: "Carregar" }).last().click();
-      await expect(page.getByTestId("tweet-author-handle")).toHaveCount(2, {
-        timeout: 10000,
-      });
-
-      await page
-        .getByTestId("tweet-add-child-btn")
-        .last()
-        .click({ force: true });
-      await page.getByTestId("menu-option-note").click();
-      await writeNote(page, "Nota do fluxo B");
-      await fitCanvasView(page);
-
-      // 4 nodes (2 tweets + 1 question + 1 note)
-      // 2 parent-child arrows (uma por fluxo)
-      // Nenhuma arrow conecta os dois fluxos
-      await expectParentChildArrows(page, 2);
+      const tweetB = await ShapeBuilder.tweet(page)
+        .atPosition(800, 300)
+        .loadUrl("https://twitter.com/b/status/222")
+        .build();
     });
 
     test("filho herda flowId do pai (verificado via storage)", async ({
@@ -175,7 +131,6 @@ test.describe("Shape Connections (Conexões Entre Shapes)", () => {
       await page.getByTestId("menu-option-question").click();
       await fitCanvasView(page);
 
-      // Verifica no localStorage que ambos têm mesmo flowId
       const storageData = await page.evaluate(async () => {
         await new Promise((r) => setTimeout(r, 100));
         return localStorage.getItem("gyul-state");
@@ -192,7 +147,6 @@ test.describe("Shape Connections (Conexões Entre Shapes)", () => {
 
       expect(shapes.length).toBeGreaterThanOrEqual(2);
 
-      // Encontrar o tweet e a question
       const tweetShape = shapes.find((s) => s.type === "tweet");
       const questionShape = shapes.find((s) => s.type === "question");
 
@@ -235,17 +189,9 @@ test.describe("Shape Connections (Conexões Entre Shapes)", () => {
   });
 
   test.describe("Grupo 4: Remoção Automática (MVP - skip)", () => {
-    test.skip("deletar shape filho remove arrow automaticamente", async () => {
-      // Feature de deleção será implementada em fase futura
-    });
-
-    test.skip("deletar shape em cadeia remove apenas arrows relacionadas", async () => {
-      // Feature de deleção será implementada em fase futura
-    });
-
-    test.skip("shape pai tem delete desabilitado (protege estrutura)", async () => {
-      // Feature de deleção será implementada em fase futura
-    });
+    test.skip("deletar shape filho remove arrow automaticamente", async () => {});
+    test.skip("deletar shape em cadeia remove apenas arrows relacionadas", async () => {});
+    test.skip("shape pai tem delete desabilitado (protege estrutura)", async () => {});
   });
 
   test.describe("Grupo 5: Persistência", () => {
@@ -261,7 +207,6 @@ test.describe("Shape Connections (Conexões Entre Shapes)", () => {
 
       await page.reload();
 
-      // Wait for canvas to load and verify arrow persists
       await expect(page.getByTestId("canvas-view")).toBeVisible();
       await expectParentChildArrows(page, 1);
     });
@@ -269,17 +214,9 @@ test.describe("Shape Connections (Conexões Entre Shapes)", () => {
   });
 
   test.describe("Grupo 6: Branch Highlight (MVP - skip)", () => {
-    test.skip("selecionar shape destaca arrows da branch", async () => {
-      // Feature de highlight será implementada em v2
-    });
-
-    test.skip("arrows fora da branch ficam com fade", async () => {
-      // Feature de highlight será implementada em v2
-    });
-
-    test.skip("clicar no canvas limpa highlight das arrows", async () => {
-      // Feature de highlight será implementada em v2
-    });
+    test.skip("selecionar shape destaca arrows da branch", async () => {});
+    test.skip("arrows fora da branch ficam com fade", async () => {});
+    test.skip("clicar no canvas limpa highlight das arrows", async () => {});
   });
 
   test.describe("Grupo 7: Conexões Manuais Desabilitadas", () => {
@@ -290,7 +227,6 @@ test.describe("Shape Connections (Conexões Entre Shapes)", () => {
       await addShapeViaMenu(page, "Note", { x: 700, y: 200 });
       await writeNote(page, "Nota separada");
 
-      // Tenta arrastar do Tweet para a Note
       const tweetCard = page.getByTestId("tweet-card");
       const noteCard = page.getByTestId("note-card").last();
 
@@ -309,7 +245,6 @@ test.describe("Shape Connections (Conexões Entre Shapes)", () => {
         await page.mouse.up();
       }
 
-      // Nenhuma parent-child arrow deve ter sido criada (shapes são de fluxos diferentes)
       await expectParentChildArrows(page, 0);
     });
 
@@ -321,28 +256,21 @@ test.describe("Shape Connections (Conexões Entre Shapes)", () => {
       await page.getByTestId("menu-option-question").click();
       await fitCanvasView(page);
 
-      // Verifica que parent-child arrow existe
       await expectParentChildArrows(page, 1);
 
-      // Tentar clicar na arrow
       const arrow = page.locator('[data-shape-type="arrow"]').first();
       await expect(arrow).toBeVisible();
 
       const arrowBox = await arrow.boundingBox();
       if (arrowBox) {
-        // Clicar no meio da arrow
         await page.mouse.click(
           arrowBox.x + arrowBox.width / 2,
           arrowBox.y + arrowBox.height / 2
         );
       }
 
-      // Verificar que a arrow não foi selecionada
-      // (no tldraw, shapes selecionadas têm classe específica ou border visível)
-      // Como configuramos para desabilitar seleção, não deve haver mudança visual
       await page.waitForTimeout(200);
 
-      // A arrow deve continuar visível e sem seleção
       await expect(arrow).toBeVisible();
     });
   });

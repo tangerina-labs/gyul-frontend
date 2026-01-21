@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Page, type Locator } from "@playwright/test";
 import {
   isParentChildArrowShape,
   isArrowBindingRecord,
@@ -29,36 +29,20 @@ export type {
 // Legacy Test Utilities - For backwards compatibility
 // =============================================================================
 
-/**
- * Clears localStorage and navigates to the canvas list page.
- * Use this at the start of tests that need a fresh state.
- */
 export async function startFresh(page: Page): Promise<void> {
-  // Mark this as a Playwright test
   await page.addInitScript(() => {
     (
       window as unknown as { __PLAYWRIGHT_TEST__: boolean }
     ).__PLAYWRIGHT_TEST__ = true;
   });
 
-  // Navigate to canvases list
   await page.goto("/canvases");
-
-  // Clear localStorage
   await page.evaluate(() => localStorage.clear());
-
-  // Reload to apply clean state
   await page.reload();
-
-  // Wait for the app to be ready
   await expect(page.getByText("gyul")).toBeVisible();
 }
 
-/**
- * Opens the create canvas modal.
- */
 export async function openCreateModal(page: Page): Promise<void> {
-  // Check if there are canvases - use header button if so, otherwise empty state button
   const newCanvasButton = page.getByTestId("new-canvas-button");
   const createFirstButton = page.getByTestId("create-first-canvas-button");
 
@@ -68,32 +52,22 @@ export async function openCreateModal(page: Page): Promise<void> {
     await createFirstButton.click();
   }
 
-  // Wait for modal to be visible
   await expect(page.getByTestId("create-canvas-modal")).toBeVisible();
 }
 
-/**
- * Creates a new canvas via the UI modal.
- * Returns the canvas ID from the URL.
- */
 export async function createCanvasViaUI(
   page: Page,
   name?: string,
 ): Promise<string> {
   await openCreateModal(page);
 
-  // Fill in name if provided
   if (name) {
     await page.getByTestId("canvas-name-input").fill(name);
   }
 
-  // Click create button
   await page.getByTestId("create-button").click();
-
-  // Wait for navigation to canvas view
   await page.waitForURL(/\/canvas\//);
 
-  // Extract canvas ID from URL
   const url = page.url();
   const match = url.match(/\/canvas\/([^/]+)/);
   if (!match) {
@@ -103,9 +77,6 @@ export async function createCanvasViaUI(
   return match[1];
 }
 
-/**
- * Creates a new canvas by pressing Enter in the modal.
- */
 export async function createCanvasViaEnter(
   page: Page,
   name?: string,
@@ -114,18 +85,13 @@ export async function createCanvasViaEnter(
 
   const input = page.getByTestId("canvas-name-input");
 
-  // Fill in name if provided
   if (name) {
     await input.fill(name);
   }
 
-  // Press Enter
   await input.press("Enter");
-
-  // Wait for navigation to canvas view
   await page.waitForURL(/\/canvas\//);
 
-  // Extract canvas ID from URL
   const url = page.url();
   const match = url.match(/\/canvas\/([^/]+)/);
   if (!match) {
@@ -135,73 +101,43 @@ export async function createCanvasViaEnter(
   return match[1];
 }
 
-/**
- * Legacy helper - creates canvas directly (for backwards compatibility)
- */
 export async function createCanvas(page: Page, name?: string): Promise<string> {
   return createCanvasViaUI(page, name);
 }
 
-/**
- * Deletes a canvas via the UI with confirmation.
- */
 export async function deleteCanvasViaUI(
   page: Page,
   canvasName: string,
 ): Promise<void> {
-  // Find the canvas card by name
   const card = page
     .getByTestId("canvas-card")
     .filter({ has: page.getByTestId("canvas-name").getByText(canvasName) });
 
-  // Hover to reveal delete button
   await card.hover();
-
-  // Click delete button
   await card.getByTestId("delete-canvas-button").click();
-
-  // Wait for delete modal
   await expect(page.getByTestId("delete-canvas-modal")).toBeVisible();
-
-  // Confirm deletion
   await page.getByTestId("confirm-delete-button").click();
-
-  // Wait for modal to close
   await expect(page.getByTestId("delete-canvas-modal")).not.toBeVisible();
 }
 
-/**
- * Navigates back to the canvas list.
- */
 export async function goToCanvasList(page: Page): Promise<void> {
-  // Click back button if on canvas view
   const backButton = page.getByTestId("back-button");
   if (await backButton.isVisible()) {
     await backButton.click();
   } else {
-    // Navigate directly
     await page.goto("/canvases");
   }
   await expectOnCanvasList(page);
 }
 
-/**
- * Waits for tldraw canvas to be fully loaded.
- */
 export async function waitForCanvas(page: Page): Promise<void> {
-  // Wait for tldraw container to be visible
   await expect(page.locator(".tl-container")).toBeVisible({ timeout: 10000 });
 }
 
-/**
- * Waits for the canvas state to be persisted to localStorage.
- * This is important before reloading the page to ensure the state is saved.
- */
 export async function waitForStatePersistence(
   page: Page,
   canvasId: string,
 ): Promise<void> {
-  // Wait for localStorage to contain the canvas
   await page.waitForFunction(
     (id: string) => {
       const state = localStorage.getItem("gyul-state");
@@ -216,7 +152,6 @@ export async function waitForStatePersistence(
     canvasId,
     { timeout: 5000 },
   );
-  // Add a small buffer to ensure the write completed
   await page.waitForTimeout(100);
 }
 
@@ -553,10 +488,15 @@ export const addShapeViaClick = addShapeViaMenu;
 /**
  * Loads a tweet by filling the URL and clicking the submit button.
  * Waits until the tweet is loaded (author handle is visible).
+ * 
+ * @param page - Playwright page
+ * @param url - Tweet URL to load
+ * @param context - Optional locator context (e.g., specific tweet card) to scope the search
  */
-export async function loadTweet(page: Page, url: string): Promise<void> {
-  const urlInput = page.getByTestId("tweet-url-input");
-  const submitBtn = page.getByTestId("tweet-submit-btn");
+export async function loadTweet(page: Page, url: string, context?: Locator): Promise<void> {
+  const ctx = context || page;
+  const urlInput = ctx.getByTestId("tweet-url-input");
+  const submitBtn = ctx.getByTestId("tweet-submit-btn");
 
   // Fill URL
   await urlInput.fill(url);
@@ -565,7 +505,7 @@ export async function loadTweet(page: Page, url: string): Promise<void> {
   await submitBtn.click();
 
   // Wait for tweet to load (author handle becomes visible)
-  await expect(page.getByTestId("tweet-author-handle")).toBeVisible({
+  await expect(ctx.getByTestId("tweet-author-handle")).toBeVisible({
     timeout: 10000,
   });
 }
@@ -573,12 +513,18 @@ export async function loadTweet(page: Page, url: string): Promise<void> {
 /**
  * Submits the tweet URL by pressing Enter.
  * Waits until the tweet is loaded (author handle is visible).
+ * 
+ * @param page - Playwright page
+ * @param url - Tweet URL to load
+ * @param context - Optional locator context (e.g., specific tweet card) to scope the search
  */
 export async function loadTweetViaEnter(
   page: Page,
   url: string,
+  context?: Locator
 ): Promise<void> {
-  const urlInput = page.getByTestId("tweet-url-input");
+  const ctx = context || page;
+  const urlInput = ctx.getByTestId("tweet-url-input");
 
   // Fill URL
   await urlInput.fill(url);
@@ -587,7 +533,7 @@ export async function loadTweetViaEnter(
   await urlInput.press("Enter");
 
   // Wait for tweet to load (author handle becomes visible)
-  await expect(page.getByTestId("tweet-author-handle")).toBeVisible({
+  await expect(ctx.getByTestId("tweet-author-handle")).toBeVisible({
     timeout: 10000,
   });
 }
@@ -606,16 +552,22 @@ export async function getTweetCardCount(page: Page): Promise<number> {
 /**
  * Submits a question in the most recent QuestionShape.
  * Waits until the AI badge appears (response received).
+ * 
+ * @param page - Playwright page
+ * @param question - Question text to submit
+ * @param context - Optional locator context (e.g., specific question card) to scope the search
  */
 export async function submitQuestion(
   page: Page,
   question: string,
+  context?: Locator
 ): Promise<void> {
   await fitCanvasView(page);
-  const promptInput = page.getByTestId("question-prompt-input").last();
+  const ctx = context || page;
+  const promptInput = ctx.getByTestId("question-prompt-input").last();
   await promptInput.fill(question);
-  await page.getByTestId("question-submit-btn").last().click();
-  await expect(page.getByTestId("question-ai-badge").first()).toBeVisible({
+  await ctx.getByTestId("question-submit-btn").last().click();
+  await expect(ctx.getByTestId("question-ai-badge")).toBeVisible({
     timeout: 10000,
   });
   await fitCanvasView(page);

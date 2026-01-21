@@ -13,20 +13,6 @@ import {
 } from './helpers/test-utils';
 import { ShapeHarness } from './helpers/shape-harness';
 
-/**
- * TRANSACTION PATTERN TESTS - UI Based
- * 
- * Objetivo: Validar o transaction pattern através da UI real da aplicação.
- * Testa a função createChildShapeTransactional de forma integrada.
- * 
- * Abordagem: 
- * - Usa UI real (botões, menus) ao invés de chamar funções diretamente
- * - Valida resultados via API do editor
- * - Mais realista e confiável que testes isolados
- * 
- * Note: eslint-disable any para page.evaluate callbacks (padrão em E2E)
- */
-
 test.describe('Transaction Pattern - UI Based Tests', () => {
   test.beforeEach(async ({ page }) => {
     await startFresh(page);
@@ -34,11 +20,10 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
   });
 
   test.describe('Suite 1: Transaction Success - Operações Bem-Sucedidas', () => {
-    test('TC-001: Criar child com arrow - validar atomicidade', async ({ page }) => {
+    test('should create child shape with arrow and validate atomicity of the operation', async ({ page }) => {
       const harness = new ShapeHarness(page);
       await harness.waitForEditor();
 
-      // Action: Criar parent e child via UI
       await addShapeViaMenu(page, 'Note');
       await writeNote(page, 'Parent');
 
@@ -46,15 +31,12 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
       await page.getByTestId('menu-option-note').click();
       await writeNote(page, 'Child');
 
-      // Assert: 2 notes existem
       const noteCount = await harness.getShapeCount('note');
       expect(noteCount).toBe(2);
 
-      // Assert: 1 arrow existe
       const arrowCount = await harness.getArrowCount();
       expect(arrowCount).toBe(1);
 
-      // Assert: Arrow tem bindings corretos
       const notes = await harness.getShapesByType('note');
       const parentId = notes[0].id;
       const childId = notes[1].id;
@@ -63,27 +45,22 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
       expect(hasValidArrow).toBe(true);
     });
 
-    test('TC-002: FlowId herdado do parent', async ({ page }) => {
+    test('should inherit flowId from parent when creating child shape', async ({ page }) => {
       const harness = new ShapeHarness(page);
       await harness.waitForEditor();
 
-      // Setup: Criar parent shape
       await addShapeViaMenu(page, 'Note');
       await writeNote(page, 'Parent');
 
-      // Get parent flowId
       let shapes = await harness.getShapesByType('note');
       const parentFlowId = shapes[0].flowId;
 
-      // Parent should have a flowId (created automatically)
       expect(parentFlowId).toBeTruthy();
 
-      // Action: Criar child via UI
       await page.getByTestId('note-add-child-btn').click();
       await page.getByTestId('menu-option-note').click();
       await writeNote(page, 'Child');
 
-      // Assert: Child tem mesmo flowId que parent
       shapes = await harness.getShapesByType('note');
       expect(shapes).toHaveLength(2);
 
@@ -91,21 +68,18 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
       expect(childFlowId).toBe(parentFlowId);
     });
 
-    test('TC-003: Multiple children com flowId consistente', async ({ page }) => {
+    test('should create multiple children with consistent flowId inheritance', async ({ page }) => {
       const harness = new ShapeHarness(page);
       await harness.waitForEditor();
 
-      // Setup: Criar parent usando builder API
       const parent = await ShapeBuilder.note(page)
         .write('Parent')
         .fitView()
         .build();
 
-      // Get parent flowId
       const shapes = await harness.getShapesByType('note');
       const parentFlowId = shapes[0].flowId;
 
-      // Action: Criar 3 children usando builder API
       await parent
         .addChild('note')
         .write('Child 1')
@@ -124,15 +98,12 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
         .fitView()
         .build();
 
-      // Assert: 4 shapes total (1 parent + 3 children)
       const noteCount = await harness.getShapeCount('note');
       expect(noteCount).toBe(4);
 
-      // Assert: 3 arrows
       const arrowCount = await harness.getArrowCount();
       expect(arrowCount).toBe(3);
 
-      // Assert: Todos têm o mesmo flowId
       const allShapes = await harness.getShapesByType('note');
       const flowIds = allShapes.map(s => s.flowId);
       const uniqueFlowIds = new Set(flowIds);
@@ -141,8 +112,7 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
       expect(flowIds[0]).toBe(parentFlowId);
     });
 
-    test('TC-004: Chain A→B→C - todos bindings corretos', async ({ page }) => {
-      // Setup: Criar chain A → B → C usando builder API
+    test('should create three-level chain with correct arrow bindings between all shapes', async ({ page }) => {
       const a = await ShapeBuilder.note(page)
         .write('A')
         .fitView()
@@ -163,13 +133,11 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
         .build();
       await fitCanvasView(page)
 
-      // Assert: 3 shapes, 2 arrows
       const shapeCounts = await getShapeCount(page);
       expect(shapeCounts).toBe(5);
 
       await expectParentChildArrows(page, 2);
 
-      // Assert: Shapes are visible
       await a.expectVisible();
       await b.expectVisible();
       await c.expectVisible();
@@ -177,7 +145,7 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
   });
 
   test.describe('Suite 2: Binding Validation - Validação Pós-Criação', () => {
-    test('TC-005: Validar bindings após criação', async ({ page }) => {
+    test('should have complete arrow bindings with start and end terminals after creation', async ({ page }) => {
       const harness = new ShapeHarness(page);
       await harness.waitForEditor();
 
@@ -209,7 +177,7 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
       expect(bindingsValid).toBe(true);
     });
 
-    test('TC-006: Bindings persistem após reload', async ({ page }) => {
+    test('should persist arrow bindings after page reload', async ({ page }) => {
       const harness = new ShapeHarness(page);
       await harness.waitForEditor();
 
@@ -238,7 +206,7 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
   });
 
   test.describe('Suite 3: Cascade Delete Integration', () => {
-    test('TC-007: Delete child deleta arrow', async ({ page }) => {
+    test('should delete arrow when child shape is deleted', async ({ page }) => {
       const harness = new ShapeHarness(page);
       await harness.waitForEditor();
 
@@ -266,7 +234,7 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
       expect(arrowCount).toBe(0);
     });
 
-    test('TC-008: Delete parent deleta arrow', async ({ page }) => {
+    test('should delete arrow when parent shape is deleted', async ({ page }) => {
       const harness = new ShapeHarness(page);
       await harness.waitForEditor();
 
@@ -292,7 +260,7 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
   });
 
   test.describe('Suite 4: Edge Cases - Casos Especiais', () => {
-    test('TC-009: FlowId criado para shape raiz', async ({ page }) => {
+    test('should automatically create flowId with UUID format for root shapes', async ({ page }) => {
       const harness = new ShapeHarness(page);
       await harness.waitForEditor();
 
@@ -311,7 +279,7 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
       expect(flowId).toMatch(uuidRegex);
     });
 
-    test('TC-010: Different shape types can be children', async ({ page }) => {
+    test('should support creating children with different shape types', async ({ page }) => {
       const harness = new ShapeHarness(page);
       await harness.waitForEditor();
 
@@ -332,7 +300,7 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
       expect(arrowCount).toBe(1);
     });
 
-    test('TC-011: Shapes sem conexões não criam arrows', async ({ page }) => {
+    test('should not create arrows for independent shapes without connections', async ({ page }) => {
       const harness = new ShapeHarness(page);
       await harness.waitForEditor();
 

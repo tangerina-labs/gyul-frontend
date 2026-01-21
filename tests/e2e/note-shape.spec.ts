@@ -15,11 +15,8 @@ test.describe('Note Shape', () => {
     await createCanvasViaUI(page, 'Note Test')
   })
 
-  // ===========================================================================
-  // Criacao e Estado Editing
-  // ===========================================================================
   test.describe('Criacao e Estado Editing', () => {
-    test('TEST-NN-001: textarea focado automaticamente ao criar', async ({ page }) => {
+    test('should automatically focus textarea when creating note', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
 
       const textarea = page.getByTestId('note-textarea')
@@ -27,14 +24,14 @@ test.describe('Note Shape', () => {
       await expect(textarea).toBeFocused()
     })
 
-    test('TEST-NN-002: placeholder visivel no estado editing', async ({ page }) => {
+    test('should display placeholder text in editing state', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
 
       const textarea = page.getByTestId('note-textarea')
       await expect(textarea).toHaveAttribute('placeholder', 'Adicione sua anotacao...')
     })
 
-    test('TEST-NN-003: hints de atalhos visiveis durante edicao', async ({ page }) => {
+    test('should show keyboard shortcut hints during editing', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
 
       const hint = page.getByTestId('note-hint')
@@ -43,13 +40,13 @@ test.describe('Note Shape', () => {
       await expect(hint).toContainText('Shift+Enter para nova linha')
     })
 
-    test('TEST-NN-004: botao [+] invisivel durante edicao', async ({ page }) => {
+    test('should hide add child button during editing', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
 
       await expect(page.getByTestId('note-add-child-btn')).not.toBeVisible()
     })
 
-    test('TEST-NN-005: visual de post-it (fundo amarelado)', async ({ page }) => {
+    test('should display post-it style with amber background', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
 
       const noteCard = page.getByTestId('note-card')
@@ -60,11 +57,8 @@ test.describe('Note Shape', () => {
     })
   })
 
-  // ===========================================================================
-  // Finalizacao
-  // ===========================================================================
   test.describe('Finalizacao', () => {
-    test('TEST-NN-006: Enter finaliza e salva nota', async ({ page }) => {
+    test('should finalize and save note when pressing Enter', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
 
       await page.getByTestId('note-textarea').fill('Minha anotacao')
@@ -74,7 +68,7 @@ test.describe('Note Shape', () => {
       await expect(page.getByTestId('note-textarea')).not.toBeVisible()
     })
 
-    test('TEST-NN-007: Shift+Enter adiciona nova linha', async ({ page }) => {
+    test('should add new line with Shift+Enter without finalizing', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
 
       const textarea = page.getByTestId('note-textarea')
@@ -88,7 +82,7 @@ test.describe('Note Shape', () => {
       await expect(content).toContainText('Linha 2')
     })
 
-    test('TEST-NN-008: Escape finaliza nota com conteudo', async ({ page }) => {
+    test('should finalize note with content when pressing Escape', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
 
       await page.getByTestId('note-textarea').fill('Nota via Escape')
@@ -98,7 +92,7 @@ test.describe('Note Shape', () => {
       await expect(page.getByTestId('note-textarea')).not.toBeVisible()
     })
 
-    test('TEST-NN-009: blur finaliza nota', async ({ page }) => {
+    test('should finalize note when clicking outside to blur', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
 
       await page.getByTestId('note-textarea').fill('Nota via blur')
@@ -110,11 +104,8 @@ test.describe('Note Shape', () => {
     })
   })
 
-  // ===========================================================================
-  // Estado Readonly
-  // ===========================================================================
   test.describe('Estado Readonly', () => {
-    test('TEST-NN-010: texto renderizado como estatico', async ({ page }) => {
+    test('should render text as static content in readonly state', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
       await writeNote(page, 'Texto estatico')
 
@@ -122,7 +113,7 @@ test.describe('Note Shape', () => {
       await expect(page.getByTestId('note-content')).toBeVisible()
     })
 
-    test('TEST-NN-011: botao [+] visivel no estado readonly', async ({ page }) => {
+    test('should show add child button in readonly state', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
       await writeNote(page, 'Nota com botao')
 
@@ -130,7 +121,7 @@ test.describe('Note Shape', () => {
       await expect(addChildBtn).toBeVisible()
     })
 
-    test('TEST-NN-012: hints ocultos no estado readonly', async ({ page }) => {
+    test('should hide keyboard shortcut hints in readonly state', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
       await writeNote(page, 'Nota sem hints')
 
@@ -138,12 +129,9 @@ test.describe('Note Shape', () => {
     })
   })
 
-  // ===========================================================================
-  // Validacao e Auto-remocao
-  // ===========================================================================
   test.describe('Validacao e Auto-remocao', () => {
 
-    test('TEST-NN-014: note vazio ao dar Escape e removido', async ({ page }) => {
+    test('should remove empty note when pressing Escape', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
 
       await expect(page.getByTestId('note-card')).toBeVisible()
@@ -154,7 +142,7 @@ test.describe('Note Shape', () => {
       await expect(page.getByTestId('note-card')).not.toBeVisible()
     })
 
-    test('TEST-NN-015: note vazio ao dar blur permanece em edicao', async ({ page }) => {
+    test('should keep empty note in editing mode when blurred', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
 
       await expect(page.getByTestId('note-card')).toBeVisible()
@@ -168,7 +156,7 @@ test.describe('Note Shape', () => {
       await expect(page.getByTestId('note-textarea')).toBeVisible()
     })
 
-    test('TEST-NN-016: note com apenas whitespace ao pressionar Enter permanece em edicao', async ({ page }) => {
+    test('should keep note in editing mode when pressing Enter with only whitespace', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
 
       await page.getByTestId('note-textarea').fill('   ')
@@ -179,7 +167,7 @@ test.describe('Note Shape', () => {
       await expect(page.getByTestId('note-textarea')).toBeVisible()
     })
 
-    test('TEST-NN-017: limite de 1000 caracteres', async ({ page }) => {
+    test('should enforce 1000 character limit', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
 
       const longText = 'a'.repeat(1001)
@@ -190,11 +178,8 @@ test.describe('Note Shape', () => {
     })
   })
 
-  // ===========================================================================
-  // Criacao de Filhos (placeholder behavior)
-  // ===========================================================================
   test.describe('Criacao de Filhos', () => {
-    test('TEST-NN-018: botao [+] presente para criar filho Question', async ({ page }) => {
+    test('should display add child button for creating question children', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
       await writeNote(page, 'Nota pai')
 
@@ -203,7 +188,7 @@ test.describe('Note Shape', () => {
       await expect(addChildBtn).toBeVisible()
     })
 
-    test('TEST-NN-019: botao [+] presente para criar filho Note', async ({ page }) => {
+    test('should display add child button for creating note children', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
       await writeNote(page, 'Nota pai')
 
@@ -211,7 +196,7 @@ test.describe('Note Shape', () => {
       await expect(addChildBtn).toBeVisible()
     })
 
-    test('TEST-NN-020: botao [+] presente para criar filho Tweet', async ({ page }) => {
+    test('should display add child button for creating tweet children', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
       await writeNote(page, 'Nota pai')
 
@@ -220,11 +205,8 @@ test.describe('Note Shape', () => {
     })
   })
 
-  // ===========================================================================
-  // Interacao e Selecao
-  // ===========================================================================
   test.describe('Interacao e Selecao', () => {
-    test('TEST-NN-021: click seleciona o no', async ({ page }) => {
+    test('should select note when clicked', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
       await writeNote(page, 'Nota selecionavel')
 
@@ -235,7 +217,7 @@ test.describe('Note Shape', () => {
       await expect(noteCard).toBeVisible()
     })
 
-    test('TEST-NN-022: note pode ser arrastado no canvas', async ({ page }) => {
+    test('should be draggable on canvas', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
       await writeNote(page, 'Nota movel')
 
@@ -243,7 +225,7 @@ test.describe('Note Shape', () => {
       await expect(page.getByTestId('note-card')).toBeVisible()
     })
 
-    test('TEST-NN-023: note preserva conteudo apos interacao', async ({ page }) => {
+    test('should preserve content after interactions', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
       await writeNote(page, 'Conteudo persistente')
 
@@ -255,7 +237,7 @@ test.describe('Note Shape', () => {
       await expect(page.getByTestId('note-content')).toContainText('Conteudo persistente')
     })
 
-    test('TEST-NN-024: note mantem fundo amarelo apos selecao', async ({ page }) => {
+    test('should maintain amber background after selection', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
       await writeNote(page, 'Nota amarela')
 
@@ -267,11 +249,8 @@ test.describe('Note Shape', () => {
     })
   })
 
-  // ===========================================================================
-  // Multiplas Notas
-  // ===========================================================================
   test.describe('Multiplas Notas', () => {
-    test('TEST-NN-025: multiplas notas no mesmo canvas', async ({ page }) => {
+    test('should support multiple notes on same canvas with distinct content', async ({ page }) => {
       // Create first note
       await addShapeViaMenu(page, 'Note', { x: 200, y: 200 })
       await writeNote(page, 'Nota 1')
@@ -289,7 +268,7 @@ test.describe('Note Shape', () => {
       await expect(page.getByTestId('note-content').filter({ hasText: 'Nota 2' })).toBeVisible()
     })
 
-    test('TEST-NN-026: criar nota enquanto outra esta em edicao', async ({ page }) => {
+    test('should allow creating new note while another is in editing state', async ({ page }) => {
       // Create first note and start editing
       await addShapeViaMenu(page, 'Note', { x: 200, y: 200 })
 
@@ -307,11 +286,8 @@ test.describe('Note Shape', () => {
     })
   })
 
-  // ===========================================================================
-  // Persistencia
-  // ===========================================================================
   test.describe('Persistencia', () => {
-    test('TEST-NN-027: note persiste apos reload', async ({ page }) => {
+    test('should persist note content after page reload', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
       await writeNote(page, 'Nota persistente')
 
@@ -328,7 +304,7 @@ test.describe('Note Shape', () => {
       await expect(page.getByTestId('note-content')).toContainText('Nota persistente')
     })
 
-    test('TEST-NN-028: note preserva quebras de linha apos reload', async ({ page }) => {
+    test('should preserve line breaks after page reload', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
 
       const textarea = page.getByTestId('note-textarea')
@@ -356,11 +332,8 @@ test.describe('Note Shape', () => {
     })
   })
 
-  // ===========================================================================
-  // Fluxos Completos
-  // ===========================================================================
   test.describe('Fluxos Completos', () => {
-    test('TEST-NN-029: fluxo completo - criar nota e visualizar', async ({ page }) => {
+    test('should complete full flow from creation to readonly with multiline content', async ({ page }) => {
       // Create note
       await addShapeViaMenu(page, 'Note')
 
@@ -389,7 +362,7 @@ test.describe('Note Shape', () => {
       await expect(content).toContainText('- Eliminar distrações')
     })
 
-    test('TEST-NN-030: fluxo de abandono - criar nota e desistir', async ({ page }) => {
+    test('should remove note when abandoning creation with empty content', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
 
       // Start typing
@@ -406,9 +379,6 @@ test.describe('Note Shape', () => {
     })
   })
 
-  // ===========================================================================
-  // Undo/Redo
-  // ===========================================================================
   test.describe('Undo/Redo', () => {
     test('undo remove note criada', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')
@@ -428,9 +398,6 @@ test.describe('Note Shape', () => {
     })
   })
 
-  // ===========================================================================
-  // Menu de Criacao
-  // ===========================================================================
   test.describe('Menu de Criacao', () => {
     test('opcao Note esta habilitada no menu', async ({ page }) => {
       // Click "Novo Fluxo" button
@@ -463,9 +430,6 @@ test.describe('Note Shape', () => {
     })
   })
 
-  // ===========================================================================
-  // Qualidade
-  // ===========================================================================
   test.describe('Qualidade', () => {
     test('sem erros no console durante interacoes normais', async ({ page }) => {
       const consoleErrors: string[] = []
@@ -492,9 +456,6 @@ test.describe('Note Shape', () => {
     })
   })
 
-  // ===========================================================================
-  // Fit View
-  // ===========================================================================
   test.describe('Fit View', () => {
     test('fit view centra note no canvas', async ({ page }) => {
       await addShapeViaMenu(page, 'Note')

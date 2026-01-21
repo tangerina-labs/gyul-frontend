@@ -30,7 +30,6 @@ export class QuestionBuilder implements IQuestionBuilder {
     parentTestId?: string,
     parentLocator?: any
   ) {
-    // Gerar UUID único para esta criação
     this.creationId = crypto.randomUUID();
     
     if (parentId && parentTestId) {
@@ -97,58 +96,45 @@ export class QuestionBuilder implements IQuestionBuilder {
     this.assertNotBuilt();
     this.state.hasBuilt = true;
 
-    // If this is a child, perform the UI clicks to create it
     if (this.state.isChild && this.state.parentId) {
       await this.performChildCreation();
     } else {
-      // Create the shape via menu
       await addShapeViaMenu(this.page, "Question", this.state.position);
     }
 
-    // Injetar metadata de teste APÓS criação
     await this.injectTestMetadata();
 
-    // Submit question if provided
+    const shapeId = await getShapeIdByTestCreationId(this.page, this.creationId);
+    const testId = getTestIdFromType("question");
+    const specificLocator = this.page.locator(`[data-testid="${testId}"][data-shape-id="${shapeId}"]`);
+
     if (this.question) {
       if (this.useEnter) {
-        // For Enter submission, we need to manually implement it
-        // The Enter key on the input doesn't submit - need to click the button
         await fitCanvasView(this.page);
-        const promptInput = this.page.getByTestId("question-prompt-input").last();
+        const promptInput = specificLocator.getByTestId("question-prompt-input");
         await promptInput.fill(this.question);
-        // Use click instead of Enter since the UI requires button click
-        await this.page.getByTestId("question-submit-btn").last().click();
+        await specificLocator.getByTestId("question-submit-btn").click();
         
         if (this.shouldWaitForAi) {
-          await this.page.getByTestId("question-ai-badge").first().waitFor({ 
+          await specificLocator.getByTestId("question-ai-badge").waitFor({ 
             state: "visible",
             timeout: 10000 
           });
         }
         await fitCanvasView(this.page);
       } else {
-        await submitQuestion(this.page, this.question);
+        await submitQuestion(this.page, this.question, specificLocator);
       }
     }
 
-    // Fit view if requested (and not already done by submitQuestion)
     if (this.state.shouldFitView && !this.question) {
       await fitCanvasView(this.page);
     }
 
-    // Buscar shape pelo creation ID
-    const shapeId = await getShapeIdByTestCreationId(this.page, this.creationId);
-    const testId = getTestIdFromType("question");
-
-    // If this was a child, wait a bit more for arrow creation
     if (this.state.isChild) {
       await this.page.waitForTimeout(200);
     }
 
-    // Create a specific locator using the shapeId
-    const specificLocator = this.page.locator(`[data-testid="${testId}"][data-shape-id="${shapeId}"]`);
-
-    // Return handle
     return new ShapeHandle({
       id: shapeId,
       testId,
@@ -166,44 +152,31 @@ export class QuestionBuilder implements IQuestionBuilder {
       throw new Error("Parent test ID not set for child builder");
     }
     
-    // Use specific parent locator if available, otherwise fallback to generic testId
     const parentCard = this.parentLocator || this.page.getByTestId(this.parentTestId);
     await parentCard.scrollIntoViewIfNeeded();
     await parentCard.waitFor({ state: "visible" });
     
-    // Click parent to focus
     await parentCard.click();
     await this.page.waitForTimeout(100);
 
-    // Click add-child button within the parent card
     const addChildBtnId = this.parentTestId.replace("-card", "-add-child-btn");
     const addChildBtn = parentCard.getByTestId(addChildBtnId);
     await addChildBtn.waitFor({ state: "visible" });
     await addChildBtn.click({ force: true });
 
-    // Wait for menu to appear
     await this.page.getByTestId("shape-type-menu").waitFor({ state: "visible" });
-    
-    // Select type from menu
     await this.page.getByTestId("menu-option-question").click();
-
-    // Wait for menu to close and shape to be created
     await this.page.getByTestId("shape-type-menu").waitFor({ state: "hidden" });
     await this.page.waitForTimeout(300);
   }
 
-  /**
-   * Injeta metadata de teste na shape mais recente do tipo
-   */
   private async injectTestMetadata(): Promise<void> {
     await this.page.evaluate((creationId) => {
       const editor = (window as any).__tldraw_editor__;
       if (!editor) return;
       
-      // Pegar todas as shapes do canvas atual
       const shapes = editor.getCurrentPageShapes();
       
-      // Filtrar por tipo 'question' e pegar a que não tem _testCreationId
       const targetShape = shapes
         .filter((s: any) => s.type === 'question')
         .find((s: any) => !s.meta?._testCreationId);
@@ -213,7 +186,6 @@ export class QuestionBuilder implements IQuestionBuilder {
         return;
       }
       
-      // Atualizar shape com metadata de teste
       editor.updateShape({
         id: targetShape.id,
         type: targetShape.type,
@@ -224,7 +196,6 @@ export class QuestionBuilder implements IQuestionBuilder {
       });
     }, this.creationId);
     
-    // Aguardar persistência
     await this.page.waitForTimeout(100);
   }
 
