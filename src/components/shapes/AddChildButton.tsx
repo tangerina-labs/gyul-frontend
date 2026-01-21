@@ -1,9 +1,10 @@
 import { useState, useCallback, useRef, useLayoutEffect, type HTMLAttributes } from 'react'
 import { createPortal } from 'react-dom'
-import { useEditor } from 'tldraw'
+import { useEditor, type TLShapeId } from 'tldraw'
+import toast from 'react-hot-toast'
 import { Interactive } from '../ui/Interactive'
 import { ShapeTypeMenu } from '../canvas/ShapeTypeMenu'
-import { createChildShape } from '../../utils/shapeChildCreation'
+import { createChildShapeTransactional } from '../../utils/shapeChildCreationTransaction'
 import type { ShapeType } from '../../types/shapes'
 
 // Menu dimensions - adjust based on actual ShapeTypeMenu size
@@ -13,7 +14,7 @@ const MENU_GAP = 4
 const VIEWPORT_PADDING = 8
 
 interface AddChildButtonProps extends HTMLAttributes<HTMLButtonElement> {
-  shapeId: string
+  shapeId: TLShapeId
   disabled?: boolean
   'data-testid'?: string
 }
@@ -92,16 +93,18 @@ export function AddChildButton({
   }, [disabled])
 
   const handleSelectType = useCallback(
-    (type: ShapeType) => {
-      // Criar shape filho + arrow
-      const result = createChildShape(editor, shapeId, type)
-
-      if (result) {
+    async (type: ShapeType) => {
+      try {
+        // Criar shape filho + arrow com transaction pattern
+        await createChildShapeTransactional(editor, shapeId, type)
+        
         // Sucesso - menu fecha automaticamente
         setShowMenu(false)
-      } else {
-        // Falha - fechar menu e log de erro já foi feito
-        console.error('Failed to create child shape')
+      } catch (error) {
+        // Falha - mostrar toast e fechar menu
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        toast.error(`Failed to create shape: ${errorMessage}`)
+        console.error('Failed to create child shape:', error)
         setShowMenu(false)
       }
     },

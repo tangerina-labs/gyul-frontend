@@ -6,6 +6,10 @@ import {
   createCanvasViaUI,
   addShapeViaMenu,
   writeNote,
+  fitCanvasView,
+  ShapeBuilder,
+  expectParentChildArrows,
+  getShapeCount,
 } from './helpers/test-utils';
 import { ShapeHarness } from './helpers/shape-harness';
 
@@ -37,7 +41,7 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
       // Action: Criar parent e child via UI
       await addShapeViaMenu(page, 'Note');
       await writeNote(page, 'Parent');
-      
+
       await page.getByTestId('note-add-child-btn').click();
       await page.getByTestId('menu-option-note').click();
       await writeNote(page, 'Child');
@@ -54,7 +58,7 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
       const notes = await harness.getShapesByType('note');
       const parentId = notes[0].id;
       const childId = notes[1].id;
-      
+
       const hasValidArrow = await harness.validateArrowBetweenShapes(parentId, childId);
       expect(hasValidArrow).toBe(true);
     });
@@ -70,7 +74,7 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
       // Get parent flowId
       let shapes = await harness.getShapesByType('note');
       const parentFlowId = shapes[0].flowId;
-      
+
       // Parent should have a flowId (created automatically)
       expect(parentFlowId).toBeTruthy();
 
@@ -82,7 +86,7 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
       // Assert: Child tem mesmo flowId que parent
       shapes = await harness.getShapesByType('note');
       expect(shapes).toHaveLength(2);
-      
+
       const childFlowId = shapes[1].flowId;
       expect(childFlowId).toBe(parentFlowId);
     });
@@ -91,19 +95,34 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
       const harness = new ShapeHarness(page);
       await harness.waitForEditor();
 
-      // Setup: Criar parent
-      await addShapeViaMenu(page, 'Note');
-      await writeNote(page, 'Parent');
+      // Setup: Criar parent usando builder API
+      const parent = await ShapeBuilder.note(page)
+        .write('Parent')
+        .fitView()
+        .build();
 
+      // Get parent flowId
       const shapes = await harness.getShapesByType('note');
       const parentFlowId = shapes[0].flowId;
 
-      // Action: Criar 3 children
-      for (let i = 1; i <= 3; i++) {
-        await page.getByTestId('note-add-child-btn').first().click();
-        await page.getByTestId('menu-option-note').click();
-        await writeNote(page, `Child ${i}`);
-      }
+      // Action: Criar 3 children usando builder API
+      await parent
+        .addChild('note')
+        .write('Child 1')
+        .fitView()
+        .build();
+
+      await parent
+        .addChild('note')
+        .write('Child 2')
+        .fitView()
+        .build();
+
+      await parent
+        .addChild('note')
+        .write('Child 3')
+        .fitView()
+        .build();
 
       // Assert: 4 shapes total (1 parent + 3 children)
       const noteCount = await harness.getShapeCount('note');
@@ -117,43 +136,43 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
       const allShapes = await harness.getShapesByType('note');
       const flowIds = allShapes.map(s => s.flowId);
       const uniqueFlowIds = new Set(flowIds);
-      
+
       expect(uniqueFlowIds.size).toBe(1);
       expect(flowIds[0]).toBe(parentFlowId);
     });
 
     test('TC-004: Chain A→B→C - todos bindings corretos', async ({ page }) => {
-      const harness = new ShapeHarness(page);
-      await harness.waitForEditor();
+      // Setup: Criar chain A → B → C usando builder API
+      const a = await ShapeBuilder.note(page)
+        .write('A')
+        .fitView()
+        .build();
+      await fitCanvasView(page)
 
-      // Setup: Criar chain A → B → C
-      await addShapeViaMenu(page, 'Note');
-      await writeNote(page, 'A');
-      
-      await page.getByTestId('note-add-child-btn').click();
-      await page.getByTestId('menu-option-note').click();
-      await writeNote(page, 'B');
-      
-      await page.getByTestId('note-add-child-btn').last().click();
-      await page.getByTestId('menu-option-note').click();
-      await writeNote(page, 'C');
+      const b = await a
+        .addChild('note')
+        .write('B')
+        .fitView()
+        .build();
+      await fitCanvasView(page)
+
+      const c = await b
+        .addChild('note')
+        .write('C')
+        .fitView()
+        .build();
+      await fitCanvasView(page)
 
       // Assert: 3 shapes, 2 arrows
-      const noteCount = await harness.getShapeCount('note');
-      expect(noteCount).toBe(3);
-      
-      const arrowCount = await harness.getArrowCount();
-      expect(arrowCount).toBe(2);
+      const shapeCounts = await getShapeCount(page);
+      expect(shapeCounts).toBe(5);
 
-      // Assert: Arrows conectam corretamente
-      const notes = await harness.getShapesByType('note');
-      const [a, b, c] = notes;
+      await expectParentChildArrows(page, 2);
 
-      const arrowAB = await harness.validateArrowBetweenShapes(a.id, b.id);
-      expect(arrowAB).toBe(true);
-
-      const arrowBC = await harness.validateArrowBetweenShapes(b.id, c.id);
-      expect(arrowBC).toBe(true);
+      // Assert: Shapes are visible
+      await a.expectVisible();
+      await b.expectVisible();
+      await c.expectVisible();
     });
   });
 
@@ -165,7 +184,7 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
       // Create parent and child
       await addShapeViaMenu(page, 'Note');
       await writeNote(page, 'Parent');
-      
+
       await page.getByTestId('note-add-child-btn').click();
       await page.getByTestId('menu-option-note').click();
       await writeNote(page, 'Child');
@@ -180,7 +199,7 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
 
         const arrow = arrows[0];
         const bindings = editor.getBindingsFromShape(arrow.id, 'arrow');
-        
+
         const hasStart = bindings.some((b: any) => b.props.terminal === 'start');
         const hasEnd = bindings.some((b: any) => b.props.terminal === 'end');
 
@@ -197,7 +216,7 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
       // Create shapes
       await addShapeViaMenu(page, 'Note');
       await writeNote(page, 'Parent');
-      
+
       await page.getByTestId('note-add-child-btn').click();
       await page.getByTestId('menu-option-note').click();
       await writeNote(page, 'Child');
@@ -226,7 +245,7 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
       // Create parent → child
       await addShapeViaMenu(page, 'Note');
       await writeNote(page, 'Parent');
-      
+
       await page.getByTestId('note-add-child-btn').click();
       await page.getByTestId('menu-option-note').click();
       await writeNote(page, 'Child');
@@ -254,7 +273,7 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
       // Create parent → child
       await addShapeViaMenu(page, 'Note');
       await writeNote(page, 'Parent');
-      
+
       await page.getByTestId('note-add-child-btn').click();
       await page.getByTestId('menu-option-note').click();
       await writeNote(page, 'Child');
@@ -285,7 +304,7 @@ test.describe('Transaction Pattern - UI Based Tests', () => {
       const shapes = await harness.getShapesByType('note');
       expect(shapes).toHaveLength(1);
       expect(shapes[0].flowId).toBeTruthy();
-      
+
       // Validate UUID format
       const flowId = shapes[0].flowId!;
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

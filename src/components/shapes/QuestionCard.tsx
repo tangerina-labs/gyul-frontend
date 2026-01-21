@@ -176,6 +176,7 @@ export function QuestionCard({ shape }: QuestionCardProps) {
       <div ref={autoHeightRef}>
         <BaseCard
           data-testid="question-card"
+          data-shape-id={shape.id}
           data-status="draft"
           borderColor="var(--color-question)"
         >
@@ -249,6 +250,7 @@ export function QuestionCard({ shape }: QuestionCardProps) {
       <div ref={autoHeightRef}>
         <BaseCard
           data-testid="question-card"
+          data-shape-id={shape.id}
           data-status="loading"
           borderColor="var(--color-loading)"
           className="animate-pulse-border"
@@ -291,6 +293,7 @@ export function QuestionCard({ shape }: QuestionCardProps) {
       <div ref={autoHeightRef}>
         <BaseCard
           data-testid="question-card"
+          data-shape-id={shape.id}
           data-status="error"
           borderColor="var(--color-error)"
         >
@@ -344,6 +347,7 @@ export function QuestionCard({ shape }: QuestionCardProps) {
       <div ref={autoHeightRef}>
         <BaseCard
           data-testid="question-card"
+          data-shape-id={shape.id}
           data-status="done"
           borderColor="var(--color-question)"
         >

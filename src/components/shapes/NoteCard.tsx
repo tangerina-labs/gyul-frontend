@@ -109,6 +109,7 @@ export function NoteCard({ shape }: NoteCardProps) {
       <div ref={autoHeightRef}>
         <BaseCard
           data-testid="note-card"
+          data-shape-id={shape.id}
           borderColor={content.trim() ? 'var(--color-note)' : 'var(--gray-300)'}
           className="bg-amber-50"
           minHeight={MIN_HEIGHT}
@@ -152,6 +153,7 @@ export function NoteCard({ shape }: NoteCardProps) {
     <div ref={autoHeightRef}>
       <BaseCard
         data-testid="note-card"
+        data-shape-id={shape.id}
         borderColor="var(--gray-300)"
         className="bg-amber-50"
         minHeight={MIN_HEIGHT}

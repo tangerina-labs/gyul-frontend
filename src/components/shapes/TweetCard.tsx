@@ -91,6 +91,7 @@ export function TweetCard({ shape }: TweetCardProps) {
       <div ref={autoHeightRef}>
         <BaseCard
           data-testid="tweet-card"
+          data-shape-id={shape.id}
           borderColor="var(--gray-300)"
           borderStyle="dashed"
         >
@@ -145,6 +146,7 @@ export function TweetCard({ shape }: TweetCardProps) {
       <div ref={autoHeightRef}>
         <BaseCard
           data-testid="tweet-card"
+          data-shape-id={shape.id}
           borderColor="var(--color-loading)"
           className="animate-pulse-border"
         >
@@ -170,6 +172,7 @@ export function TweetCard({ shape }: TweetCardProps) {
       <div ref={autoHeightRef}>
         <BaseCard
           data-testid="tweet-card"
+          data-shape-id={shape.id}
           borderColor="var(--color-error)"
         >
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -229,6 +232,7 @@ export function TweetCard({ shape }: TweetCardProps) {
       <div ref={autoHeightRef}>
         <BaseCard
           data-testid="tweet-card"
+          data-shape-id={shape.id}
           borderColor="var(--color-tweet)"
           style={{
             border: '3px solid var(--color-tweet)',

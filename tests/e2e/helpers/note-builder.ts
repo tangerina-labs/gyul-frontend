@@ -13,6 +13,7 @@ import {
 export class NoteBuilder implements INoteBuilder {
   private content?: string;
   private parentTestId?: string;
+  private parentLocator?: any;
   private creationId: string;
   private state: BuilderState = {
     isChild: false,
@@ -24,7 +25,8 @@ export class NoteBuilder implements INoteBuilder {
   constructor(
     private page: Page,
     parentId?: string,
-    parentTestId?: string
+    parentTestId?: string,
+    parentLocator?: any
   ) {
     // Gerar UUID único para esta criação
     this.creationId = crypto.randomUUID();
@@ -33,6 +35,7 @@ export class NoteBuilder implements INoteBuilder {
       this.state.isChild = true;
       this.state.parentId = parentId;
       this.parentTestId = parentTestId;
+      this.parentLocator = parentLocator;
     }
   }
 
@@ -100,13 +103,18 @@ export class NoteBuilder implements INoteBuilder {
       await this.page.waitForTimeout(200);
     }
 
+    // Create a specific locator using the shapeId
+    // Filter by the data-shape-id attribute (we'll need to add this in the component)
+    // For now, use a more specific approach: filter by matching shape in DOM
+    const specificLocator = this.page.locator(`[data-testid="${testId}"][data-shape-id="${shapeId}"]`);
+
     // Return handle
     return new ShapeHandle({
       id: shapeId,
       testId,
       type: "note",
       page: this.page,
-      locator: this.page.getByTestId(testId).last(),
+      locator: specificLocator,
     });
   }
 
@@ -118,8 +126,8 @@ export class NoteBuilder implements INoteBuilder {
       throw new Error("Parent test ID not set for child builder");
     }
     
-    // Ensure parent is in view and visible
-    const parentCard = this.page.getByTestId(this.parentTestId);
+    // Use specific parent locator if available, otherwise fallback to generic testId
+    const parentCard = this.parentLocator || this.page.getByTestId(this.parentTestId);
     await parentCard.scrollIntoViewIfNeeded();
     await parentCard.waitFor({ state: "visible" });
     
@@ -127,9 +135,9 @@ export class NoteBuilder implements INoteBuilder {
     await parentCard.click();
     await this.page.waitForTimeout(100);
 
-    // Click add-child button
+    // Click add-child button within the parent card
     const addChildBtnId = this.parentTestId.replace("-card", "-add-child-btn");
-    const addChildBtn = this.page.getByTestId(addChildBtnId);
+    const addChildBtn = parentCard.getByTestId(addChildBtnId);
     await addChildBtn.waitFor({ state: "visible" });
     await addChildBtn.click({ force: true });
 

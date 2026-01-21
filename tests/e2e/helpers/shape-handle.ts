@@ -48,13 +48,13 @@ export class ShapeHandle implements IShapeHandle {
     
     switch (type.toLowerCase()) {
       case "tweet":
-        builder = new TweetBuilderImpl(this.page, this.id, this.testId);
+        builder = new TweetBuilderImpl(this.page, this.id, this.testId, this.locator);
         break;
       case "question":
-        builder = new QuestionBuilderImpl(this.page, this.id, this.testId);
+        builder = new QuestionBuilderImpl(this.page, this.id, this.testId, this.locator);
         break;
       case "note":
-        builder = new NoteBuilderImpl(this.page, this.id, this.testId);
+        builder = new NoteBuilderImpl(this.page, this.id, this.testId, this.locator);
         break;
       default:
         throw new Error(`Unknown shape type: ${type}`);
