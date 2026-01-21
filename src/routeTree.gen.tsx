@@ -7,10 +7,10 @@
 import {
   createRootRoute,
   createRoute,
-  redirect,
   Outlet,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/router-devtools'
+import { LandingPage } from './views/LandingPage'
 import { CanvasListView } from './views/CanvasListView'
 import { CanvasView } from './views/CanvasView'
 import { SHOW_DEV_TOOLS } from './config/env'
@@ -37,13 +37,11 @@ export const rootRoute = createRootRoute({
   component: RootLayout,
 })
 
-// Index Route - redirects to /canvases
+// Index Route - Landing Page (SSG)
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  beforeLoad: () => {
-    throw redirect({ to: '/canvases' })
-  },
+  component: LandingPage,
 })
 
 // Canvases Route
