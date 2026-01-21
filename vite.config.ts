@@ -22,16 +22,5 @@ export default defineConfig({
     ssrManifest: true,
     // Increase chunk size limit to avoid warnings for large vendors (tldraw, lottie)
     chunkSizeWarningLimit: 1000,
-    rollupOptions: {
-      output: {
-        // Manual chunk splitting for better caching
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom'],
-          'vendor-router': ['@tanstack/react-router', '@tanstack/react-query'],
-          'vendor-tldraw': ['tldraw'],
-          'vendor-lottie': ['lottie-web'],
-        },
-      },
-    },
   },
 })
