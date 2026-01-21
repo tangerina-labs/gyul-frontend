@@ -34,33 +34,33 @@ export function LandingPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
       {/* Hero Section */}
-      <main className="flex-1 flex items-center justify-center px-4 md:px-8 py-16 md:py-24">
+      <main className="flex-1 flex items-center justify-center px-4 md:px-8">
         <div className="max-w-2xl w-full text-center">
           {/* Animated Logo */}
-          <div className="mb-8 flex flex-col items-center">
+          <div className="mb-4 md:mb-6 flex flex-col items-center">
             <div
               ref={lottieContainer}
-              className="w-64 md:w-96 mx-auto"
+              className="w-48 md:w-56 mx-auto"
               aria-label="gyul animated logo"
             />
           </div>
 
           {/* Headline */}
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-gray-900 mb-6 leading-tight">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 leading-tight">
             Transform fleeting tweets into lasting understanding
           </h1>
 
           {/* Subheadline */}
-          <p className="text-lg md:text-xl text-gray-600 mb-10 max-w-xl mx-auto leading-relaxed">
+          <p className="text-base md:text-lg text-gray-600 font-normal mb-6 md:mb-8 max-w-xl mx-auto leading-relaxed">
             Stop scrolling, start thinking. Gyul turns bite-sized content into
             structured knowledge you can explore, question, and build upon.
           </p>
 
           {/* Input Section (Demonstrative) */}
-          <div className="mb-6">
-            <div className="relative max-w-md mx-auto">
+          <div className="mb-5 md:mb-6">
+            <div className="relative max-w-lg mx-auto">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <svg
                   className="w-5 h-5 text-gray-400"
@@ -81,7 +81,7 @@ export function LandingPage() {
                 type="text"
                 readOnly
                 placeholder="Paste a tweet URL to begin..."
-                className="w-full pl-12 pr-4 py-3 md:py-4 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-default"
+                className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 font-normal focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-default text-base shadow-sm"
               />
             </div>
           </div>
@@ -89,7 +89,7 @@ export function LandingPage() {
           {/* CTA Button */}
           <Link
             to="/canvases"
-            className="inline-flex items-center gap-2 px-8 py-3 md:py-4 bg-orange-500 text-white font-medium rounded-lg transition-colors duration-200 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+            className="inline-flex items-center gap-2 px-6 md:px-8 py-3 bg-orange-500 text-white font-semibold rounded-lg transition-colors duration-200 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 text-base shadow-sm"
           >
             Start exploring
             <svg
@@ -111,11 +111,11 @@ export function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="py-6 md:py-8 text-center border-t border-gray-200">
+      <footer className="py-4 md:py-5 text-center border-t border-gray-200">
         <div className="flex items-center justify-center gap-2 text-gray-600">
-          <span className="font-medium text-gray-900">gyul</span>
+          <span className="font-medium text-gray-900 text-sm md:text-base">gyul</span>
           <span className="text-gray-300">|</span>
-          <span className="text-sm">Peel ideas, one layer at a time</span>
+          <span className="text-xs md:text-sm">Peel ideas, one layer at a time</span>
         </div>
       </footer>
     </div>
