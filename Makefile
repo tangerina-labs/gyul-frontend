@@ -19,7 +19,7 @@ test-unit-watch:
 	pnpm vitest
 
 test-e2e:
-	pnpm exec playwright test
+	pnpm exec playwright test --reporter=list
 
 test-e2e-ui:
 	pnpm exec playwright test --ui

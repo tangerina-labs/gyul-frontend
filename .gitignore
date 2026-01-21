@@ -27,5 +27,6 @@ test-results
 playwright-report
 .cursor
 .vscode
-
+.pnpm-store
+blob-report
 .env

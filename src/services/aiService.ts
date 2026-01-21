@@ -1,157 +1,195 @@
-import type { CustomNodeData } from '@/types'
-import { isTweetData, isQuestionData, isNoteData, isLoadedTweet, isDoneQuestion } from '@/types'
+/**
+ * AI Service - Mock implementation for MVP
+ *
+ * Provides contextual mock responses for questions.
+ * Returns deterministic data based on prompt for consistency.
+ */
 
-export interface AIContext {
-  ancestors: CustomNodeData[]
-  prompt: string
+export interface AiContext {
+  tweet?: { text: string; author: string }
+  previousQuestions?: Array<{ prompt: string; response: string }>
+  notes?: string[]
 }
 
-export interface AIResponse {
+export interface AiResponse {
   success: boolean
   content?: string
   error?: string
 }
 
-const isTestEnv = typeof window !== 'undefined' && (window as any).__PLAYWRIGHT_TEST__
-const MOCK_DELAY = isTestEnv ? 0 : 1500
+/**
+ * Checks if running in Playwright test environment.
+ */
+function isTestEnvironment(): boolean {
+  if (typeof window === 'undefined') return false
+  return (
+    (window as Window & { __PLAYWRIGHT_TEST__?: boolean }).__PLAYWRIGHT_TEST__ ===
+    true
+  )
+}
 
-const RESPONSE_TEMPLATES = {
-  withTweet: [
-    `Analisando o tweet mencionado, posso dizer que "{prompt}" e uma questao interessante. O autor aborda conceitos relacionados a inovacao e pensamento de longo prazo. A ideia central parece ser sobre como pequenas acoes consistentes podem levar a grandes resultados.`,
-    `Excelente pergunta! O tweet traz uma perspectiva sobre "{prompt}" que merece reflexao. O ponto principal e que o conhecimento, assim como os juros compostos, cresce exponencialmente quando aplicado consistentemente ao longo do tempo.`,
-    `Com base no contexto do tweet, "{prompt}" pode ser entendido de varias formas. O autor parece defender que a simplicidade e uma forma sofisticada de pensar, e que remover complexidade desnecessaria e tao importante quanto adicionar funcionalidades.`
-  ],
-  withPreviousQA: [
-    `Continuando nossa exploracao, "{prompt}" se conecta com o que discutimos anteriormente. A ideia de aprendizado continuo e iterativo aparece novamente aqui - cada pergunta nos leva mais fundo no entendimento do tema.`,
-    `Interessante voce perguntar isso! Considerando as questoes anteriores, "{prompt}" parece ser uma extensao natural do raciocinio. O padrao que emerge e sobre como ideias simples, quando aplicadas consistentemente, geram resultados extraordinarios.`,
-    `Boa pergunta de follow-up! "{prompt}" expande o que ja exploramos. A conexao entre as ideias sugere um framework mental: comece simples, itere constantemente, e deixe os resultados compostos fazerem o trabalho pesado.`
-  ],
-  generic: [
-    `"{prompt}" e uma questao que merece reflexao cuidadosa. De forma geral, a resposta envolve equilibrar multiplas perspectivas e considerar tanto beneficios de curto prazo quanto impactos de longo prazo.`,
-    `Pensando sobre "{prompt}", existem varios angulos a considerar. A chave esta em identificar os principios fundamentais e aplica-los de forma consistente, adaptando-se ao contexto especifico.`,
-    `Para responder "{prompt}", precisamos considerar o contexto mais amplo. A abordagem mais efetiva geralmente envolve comecar com o basico, validar hipoteses rapidamente, e iterar baseado em feedback real.`
+/**
+ * Checks if AI error is forced (for testing error states).
+ */
+function isForceError(): boolean {
+  if (typeof window === 'undefined') return false
+  return (
+    (window as Window & { __FORCE_AI_ERROR__?: boolean }).__FORCE_AI_ERROR__ ===
+    true
+  )
+}
+
+/**
+ * Gets custom AI delay (for testing).
+ */
+function getCustomDelay(): number | null {
+  if (typeof window === 'undefined') return null
+  return (window as Window & { __AI_DELAY_MS__?: number }).__AI_DELAY_MS__ ?? null
+}
+
+/**
+ * Simple hash function to generate deterministic values from string.
+ */
+function hashCode(str: string): number {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i)
+    hash = (hash << 5) - hash + char
+    hash = hash & hash
+  }
+  return Math.abs(hash)
+}
+
+/**
+ * Generates a contextual mock response based on prompt and context.
+ */
+function generateMockResponse(prompt: string, context: AiContext): string {
+  const parts: string[] = []
+
+  // Add tweet context if available
+  if (context.tweet) {
+    parts.push(`Analisando o tweet de @${context.tweet.author}`)
+  }
+
+  // Add previous questions context if available
+  if (context.previousQuestions && context.previousQuestions.length > 0) {
+    parts.push(
+      `considerando as ${context.previousQuestions.length} perguntas anteriores`
+    )
+  }
+
+  // Add notes context if available
+  if (context.notes && context.notes.length > 0) {
+    parts.push(`levando em conta suas ${context.notes.length} anotacoes`)
+  }
+
+  // Build response
+  let response = ''
+
+  if (parts.length > 0) {
+    response = parts.join(', ') + ', '
+  }
+
+  // Generate response based on prompt content
+  const promptLower = prompt.toLowerCase()
+  const hash = hashCode(prompt)
+
+  const genericResponses = [
+    'Esta e uma resposta mockada que demonstra como a IA responderia a esta pergunta. Em producao, isso seria substituido por uma chamada real a um LLM.',
+    'Baseado no contexto fornecido, posso oferecer a seguinte analise. Note que esta e uma resposta de demonstracao para validar a experiencia do usuario.',
+    'Aqui esta minha perspectiva sobre sua pergunta. Esta resposta mockada simula o comportamento esperado do sistema em producao.',
+    'Considerando todos os fatores relevantes, esta e minha resposta. O sistema real utilizaria um modelo de linguagem avancado para gerar respostas mais contextualizadas.',
+    'Esta analise leva em conta o contexto disponivel. Em um ambiente de producao, a resposta seria gerada por um LLM como GPT ou Claude.',
   ]
-}
 
-export async function generateAnswer(context: AIContext): Promise<AIResponse> {
-  if (!context.prompt.trim()) {
-    return {
-      success: false,
-      error: 'Por favor, escreva uma pergunta.'
-    }
-  }
+  // Select response based on prompt hash for determinism
+  const selectedResponse = genericResponses[hash % genericResponses.length]
 
-  await delay(MOCK_DELAY)
-
-  // Random error disabled in test env to avoid flakiness
-  const isTestEnv = typeof window !== 'undefined' &&
-    (window.location.href.includes('test-harness') ||
-     (window as any).__PLAYWRIGHT_TEST__)
-
-  if (!isTestEnv && Math.random() < 0.05) {
-    return {
-      success: false,
-      error: 'Erro ao gerar resposta. Por favor, tente novamente.'
-    }
-  }
-
-  const response = generateContextualResponse(context)
-
-  return {
-    success: true,
-    content: response
-  }
-}
-
-interface ContextAnalysis {
-  hasTweet: boolean
-  tweetText: string | null
-  hasPreviousQA: boolean
-  previousQAs: Array<{ prompt: string; response: string }>
-  hasNotes: boolean
-  notes: string[]
-}
-
-function analyzeContext(ancestors: CustomNodeData[]): ContextAnalysis {
-  const tweets = ancestors.filter(isLoadedTweet)
-  const questions = ancestors.filter(isDoneQuestion)
-  const notes = ancestors.filter(isNoteData)
-
-  return {
-    hasTweet: tweets.length > 0,
-    tweetText: tweets[0]?.text ?? null,
-    hasPreviousQA: questions.length > 0,
-    previousQAs: questions.map(q => ({
-      prompt: q.prompt,
-      response: q.response ?? ''
-    })),
-    hasNotes: notes.length > 0,
-    notes: notes.map(n => n.content)
-  }
-}
-
-function generateContextualResponse(context: AIContext): string {
-  const analysis = analyzeContext(context.ancestors)
-
-  let templates: string[]
-
-  if (analysis.hasTweet) {
-    templates = RESPONSE_TEMPLATES.withTweet
-  } else if (analysis.hasPreviousQA) {
-    templates = RESPONSE_TEMPLATES.withPreviousQA
+  // Add specific prefix based on question type
+  if (promptLower.includes('significa') || promptLower.includes('meaning')) {
+    response += `aqui esta minha interpretacao sobre "${prompt.slice(0, 30)}...": `
+  } else if (promptLower.includes('como') || promptLower.includes('how')) {
+    response += `sobre como "${prompt.slice(0, 30)}...": `
+  } else if (promptLower.includes('por que') || promptLower.includes('why')) {
+    response += `explicando por que "${prompt.slice(0, 30)}...": `
   } else {
-    templates = RESPONSE_TEMPLATES.generic
+    response += `respondendo a "${prompt.slice(0, 30)}...": `
   }
 
-  const template = templates[Math.floor(Math.random() * templates.length)]!
-  let response = template.replace('{prompt}', context.prompt)
+  response += selectedResponse
 
-  if (analysis.hasTweet && analysis.tweetText) {
-    response += `\n\nO tweet original menciona: "${truncate(analysis.tweetText, 100)}"`
-  }
-
-  if (analysis.hasPreviousQA && analysis.previousQAs.length > 0) {
-    const lastQA = analysis.previousQAs[analysis.previousQAs.length - 1]!
-    response += `\n\nIsso se conecta com sua pergunta anterior sobre "${truncate(lastQA.prompt, 50)}".`
-  }
-
-  if (analysis.hasNotes && analysis.notes.length > 0) {
-    response += `\n\nSuas anotacoes tambem sao relevantes para esta discussao.`
+  // Add line breaks for longer responses (testing ExpandableText)
+  if (prompt.length > 50) {
+    response +=
+      '\n\nParagrafo adicional para demonstrar respostas mais longas que podem precisar de expansao.'
+    response +=
+      '\n\nMais um paragrafo que adiciona profundidade a resposta e testa a funcionalidade de "Ver mais".'
   }
 
   return response
 }
 
-function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
-}
-
-function truncate(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text
-  return text.slice(0, maxLength - 3) + '...'
-}
-
 /**
- * Formats context for debug/log.
- * Useful for verifying what would be sent to a real LLM.
+ * Generates a response for a question (mock implementation).
+ *
+ * - Validates prompt
+ * - Returns deterministic mock data based on prompt and context
+ * - Simulates network delay (1500ms in production, 0ms in tests)
+ * - Has 5% chance of random error (disabled in tests)
  */
-export function formatContextForDebug(context: AIContext): string {
-  const lines: string[] = ['=== AI CONTEXT ===']
-
-  lines.push('\n--- ANCESTORS ---')
-  for (const node of context.ancestors) {
-    if (isTweetData(node) && node.status === 'loaded') {
-      lines.push(`[TWEET] @${node.author?.handle}: ${node.text}`)
-    } else if (isQuestionData(node) && node.status === 'done') {
-      lines.push(`[Q] ${node.prompt}`)
-      lines.push(`[A] ${node.response}`)
-    } else if (isNoteData(node)) {
-      lines.push(`[NOTE] ${node.content}`)
+export async function generateResponse(
+  prompt: string,
+  context: AiContext = {}
+): Promise<AiResponse> {
+  // Check for forced error (testing)
+  if (isForceError()) {
+    const customDelay = getCustomDelay()
+    const delay = customDelay ?? (isTestEnvironment() ? 0 : 1500)
+    if (delay > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delay))
+    }
+    return {
+      success: false,
+      error: 'Erro ao gerar resposta. Tente novamente.',
     }
   }
 
-  lines.push('\n--- PROMPT ---')
-  lines.push(context.prompt)
+  // Validate prompt
+  const trimmedPrompt = prompt.trim()
+  if (!trimmedPrompt || trimmedPrompt.length < 3) {
+    return {
+      success: false,
+      error: 'Pergunta muito curta. Minimo de 3 caracteres.',
+    }
+  }
 
-  return lines.join('\n')
+  if (trimmedPrompt.length > 1000) {
+    return {
+      success: false,
+      error: 'Pergunta muito longa. Maximo de 1000 caracteres.',
+    }
+  }
+
+  // Simulate network delay (skip in test environment)
+  const customDelay = getCustomDelay()
+  const delay = customDelay ?? (isTestEnvironment() ? 0 : 1500)
+  if (delay > 0) {
+    await new Promise((resolve) => setTimeout(resolve, delay))
+  }
+
+  // Random error chance (5%) - disabled in tests
+  if (!isTestEnvironment() && Math.random() < 0.05) {
+    return {
+      success: false,
+      error: 'Erro ao gerar resposta. Tente novamente.',
+    }
+  }
+
+  // Generate mock response
+  const content = generateMockResponse(trimmedPrompt, context)
+
+  return {
+    success: true,
+    content,
+  }
 }

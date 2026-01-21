@@ -1,86 +1,75 @@
-# gyul
+# React + TypeScript + Vite
 
-> **gyul** (귤) - tangerine in Korean. Just as we peel a tangerine layer by layer to reach its core, gyul lets you peel ideas layer by layer until you reach deep knowledge.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
----
+Currently, two official plugins are available:
 
-## What is gyul?
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-**gyul** is a visual thinking space where you transform tweets into knowledge trees.
+## React Compiler
 
-Instead of passively consuming and forgetting, you:
+The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
 
-1. Paste an interesting tweet URL
-2. Ask questions about the content
-3. Receive AI-contextualized answers
-4. Branch your thinking in new directions
-5. Add your own insights
-6. Visualize all the knowledge generated
+Note: This will impact Vite dev & build performances.
 
----
+## Expanding the ESLint configuration
 
-## Why gyul exists?
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-Interesting tweets often condense profound ideas into 280 characters. The default cycle is: read, think "interesting", like, scroll, **forget**.
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
 
-gyul breaks this cycle by offering an infinite canvas where the tweet becomes the starting point for cognitive exploration.
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
 
----
-
-## Tech Stack
-
-- **Vue 3** + Composition API
-- **TypeScript**
-- **Vue Flow** (interactive canvas)
-- **Vite** (bundler)
-- **Playwright** (e2e tests)
-- **Vitest** (unit tests)
-- **Storybook** (component documentation)
-
----
-
-## Quick Start
-
-```bash
-# Install dependencies
-pnpm install
-
-# Run development server
-pnpm dev
-
-# Run tests
-pnpm test
-
-# Open Storybook
-pnpm storybook
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
 
----
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-## Scripts
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Development server |
-| `pnpm build` | Production build |
-| `pnpm test` | All tests (unit + e2e) |
-| `pnpm test:unit` | Unit tests only |
-| `pnpm test:e2e` | E2E tests only |
-| `pnpm storybook` | Visual component documentation |
-
----
-
-## Documentation
-
-Detailed project documentation in [`docs/projeto/`](./docs/projeto/):
-
-- [Product & Philosophy](./docs/projeto/01-PRODUTO-E-FILOSOFIA.md) - Vision, problem/solution, design principles
-- [Architecture & Data](./docs/projeto/02-ARQUITETURA-E-DADOS.md) - Stack, components, TypeScript types
-- [Design & UX](./docs/projeto/03-DESIGN-E-UX.md) - Design system, user journeys
-- [Roadmap & Glossary](./docs/projeto/04-ROADMAP-E-GLOSSARIO.md) - Planned evolution
-
----
-
-## Status
-
-MVP in development. Integrations (Twitter API, AI) are mocked to validate the canvas experience.
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```

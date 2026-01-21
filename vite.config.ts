@@ -1,16 +1,13 @@
 import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import { fileURLToPath, URL } from 'node:url'
+import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
-  server: {
-    port: process.env.PORT ? Number(process.env.PORT) : 5173
-  },
-  plugins: [vue()],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
-    }
-  }
+  plugins: [
+    react({
+      babel: {
+        plugins: [['babel-plugin-react-compiler']],
+      },
+    }),
+  ],
 })
