@@ -2,8 +2,8 @@ import { Editor, createShapeId, type TLShapeId } from 'tldraw'
 import type { ShapeType } from '../types/shapes'
 import { deleteShapeWithArrows } from './shapeDelete'
 import {
-  calculateChildPosition,
-  getChildrenCount,
+  calculateChildPositionWithCollisionDetection,
+  estimateChildHeight,
   createArrow,
   checkArrowBindings,
 } from './shapeChildCreation'
@@ -85,10 +85,16 @@ export async function createChildShapeTransactional(
     // IMPORTANTE: Parent NUNCA é atualizado aqui (responsabilidade do componente)
     const parentFlowId = (parent.props as any).flowId || crypto.randomUUID()
 
-    // Calcular posição do child
-    const childrenCount = getChildrenCount(editor, parentId)
+    // Calcular posição do child com detecção de colisão
     const childWidth = childType === 'note' ? 300 : 400
-    const position = calculateChildPosition(parent as any, childrenCount, childWidth)
+    const childHeight = estimateChildHeight(childType)
+    const position = calculateChildPositionWithCollisionDetection(
+      editor,
+      parentId,
+      parent as any,
+      childWidth,
+      childHeight
+    )
 
     const childId = createShapeId()
 

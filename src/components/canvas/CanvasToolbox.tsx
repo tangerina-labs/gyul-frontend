@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { track, useEditor } from 'tldraw'
 import { ShapeTypeMenu } from './ShapeTypeMenu'
 import type { ShapeType } from '../../types/shapes'
@@ -104,6 +104,23 @@ export const CanvasToolbox = track(function CanvasToolbox() {
 
   // Format zoom level as percentage
   const zoomPercentage = Math.round(zoomLevel * 100)
+
+  useEffect(() => {
+    
+
+    // Close menu on Escape key
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsCreatingFlow(false)
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   return (
     <>
