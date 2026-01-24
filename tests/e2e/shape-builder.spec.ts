@@ -367,7 +367,7 @@ test.describe("Shape Builder API", () => {
   test.describe("Complex Scenarios", () => {
     test("creates branching tree structure", async ({ page }) => {
       const root = await ShapeBuilder.tweet(page)
-        .loadUrl("https://twitter.com/user/status/999")
+        .loadUrlViaEnter("https://twitter.com/user/status/999")
         .build();
 
       // Branch 1
@@ -375,14 +375,17 @@ test.describe("Shape Builder API", () => {
         .submit("Branch 1?")
         .build();
 
-      const branch1leaf = await branch1.addChild("note")
+      await branch1.addChild("note")
         .write("Leaf 1")
         .build();
 
-      // Branch 2
-      const branch2 = await root.addChild("note")
+      // // Branch 2
+      await root.addChild("note")
         .write("Branch 2")
         .build();
+
+
+      // await fitCanvasView(page)
 
       // Total: 1 root + 2 children + 1 grandchild = 4 shapes
       // Total arrows: 3 (root->branch1, root->branch2, branch1->leaf)

@@ -2,11 +2,202 @@ import { Editor, createShapeId, type TLShapeId } from 'tldraw'
 import type { ShapeType } from '../types/shapes'
 import type { ParentChildArrowMeta, ArrowBindingProps } from '../types/arrows'
 import { deleteShapeWithArrows } from './shapeDelete'
+type Diagonals =
+  'bottom-right' |
+  'top-right' |
+  'top-left' |
+  'bottom-left'
+
+type VerticalHorizontals =
+  'bottom' |
+  'right' |
+  'top' |
+  'left'
+
+type Directions = Diagonals | VerticalHorizontals
+
 
 /**
- * Calcula posição para child shape usando algoritmo de espiral.
- * Primeira posição: abaixo e centralizado
- * Posições subsequentes: espiral ao redor do pai
+ * Verifica colisão entre dois retângulos usando AABB (Axis-Aligned Bounding Box).
+ * Adiciona padding para garantir gap mínimo entre shapes.
+ * 
+ * @returns true se há colisão, false se não há
+ */
+function checkCollision(
+  bounds1: { x: number; y: number; w: number; h: number },
+  bounds2: { x: number; y: number; w: number; h: number },
+  padding: number = 20
+): boolean {
+  // AABB collision detection with padding
+  return !(
+    bounds1.x + bounds1.w + padding < bounds2.x ||
+    bounds1.x - padding > bounds2.x + bounds2.w ||
+    bounds1.y + bounds1.h + padding < bounds2.y ||
+    bounds1.y - padding > bounds2.y + bounds2.h
+  )
+}
+
+/**
+ * Estima altura inicial do child shape para detecção de colisão.
+ * Shapes usam measuredHeight dinâmica, mas precisamos de estimativa conservadora
+ * para posicionamento inicial.
+ */
+export function estimateChildHeight(childType: ShapeType): number {
+  // Estimativa conservadora baseada no DEFAULT_HEIGHT dos ShapeUtils (150px)
+  // + margem para conteúdo dinâmico
+  // Note shapes tendem a ser menores, outros shapes podem ter mais conteúdo
+  if (childType === 'note') {
+    return 180
+  }
+  return 200
+}
+
+export function calculateChildPositionWithCollisionDetection(
+  editor: Editor,
+  parentId: TLShapeId,
+  parent: { x: number; y: number; props: { w: number; measuredHeight?: number; h: number } },
+  childWidth: number,
+  childHeight: number
+): { x: number; y: number } {
+  const parentWidth = parent.props.w
+  const parentHeight = parent.props.measuredHeight ?? parent.props.h
+  const gap = 80
+  const maxLevels = 25
+  const SQRT2 = Math.SQRT2 // ~1.414
+
+  // Obter todos os shapes do canvas para verificação de colisão
+  const allShapes = editor.getCurrentPageShapes()
+
+  // Centro do pai
+  const parentCenterX = parent.x + parentWidth / 2
+  const parentCenterY = parent.y + parentHeight / 2
+
+  // Função helper para verificar colisão em uma posição
+  const hasCollisionAt = (x: number, y: number, direction: string, level: number): boolean => {
+    const candidateBounds = { x, y, w: childWidth, h: childHeight }
+
+    for (const shape of allShapes) {
+      if (shape.id === parentId) continue
+      if (shape.type === 'arrow') continue
+
+      const shapeBounds = editor.getShapePageBounds(shape.id)
+      if (!shapeBounds) continue
+
+      if (checkCollision(candidateBounds, {
+        x: shapeBounds.x,
+        y: shapeBounds.y,
+        w: shapeBounds.width,
+        h: shapeBounds.height
+      }, gap)) {
+        console.log(`[V2] ✗ Colisão em ${direction} (nível ${level}) com shape ${shape.type} em x=${shapeBounds.x.toFixed(0)}, y=${shapeBounds.y.toFixed(0)}`)
+        return true
+      }
+    }
+    return false
+  }
+
+  // Função para calcular posição baseada na direção
+  // Parte da BORDA do pai, não do centro
+  const calculatePositionForDirection = (
+    direction: Directions,
+    level: number
+  ): { x: number; y: number } => {
+    const levelOffset = level * gap
+
+    switch (direction) {
+      case 'bottom':
+        // Child centralizado abaixo do pai
+        return {
+          x: parentCenterX - childWidth / 2,
+          y: parent.y + parentHeight + gap + levelOffset
+        }
+
+      case 'top':
+        // Child centralizado acima do pai
+        return {
+          x: parentCenterX - childWidth / 2,
+          y: parent.y - childHeight - gap - levelOffset
+        }
+
+      case 'right':
+        // Child à direita, centralizado verticalmente
+        return {
+          x: parent.x + parentWidth + gap + levelOffset,
+          y: parentCenterY - childHeight / 2
+        }
+
+      case 'left':
+        // Child à esquerda, centralizado verticalmente
+        return {
+          x: parent.x - childWidth - gap - levelOffset,
+          y: parentCenterY - childHeight / 2
+        }
+
+      case 'bottom-right':
+        // Diagonal: aplicar fator sqrt(2) para compensar geometria
+        return {
+          x: parent.x + parentWidth + (gap + levelOffset) / SQRT2,
+          y: parent.y + parentHeight + (gap + levelOffset) / SQRT2
+        }
+
+      case 'bottom-left':
+        return {
+          x: parent.x - childWidth - (gap + levelOffset) / SQRT2,
+          y: parent.y + parentHeight + (gap + levelOffset) / SQRT2
+        }
+
+      case 'top-right':
+        return {
+          x: parent.x + parentWidth + (gap + levelOffset) / SQRT2,
+          y: parent.y - childHeight - (gap + levelOffset) / SQRT2
+        }
+
+      case 'top-left':
+        return {
+          x: parent.x - childWidth - (gap + levelOffset) / SQRT2,
+          y: parent.y - childHeight - (gap + levelOffset) / SQRT2
+        }
+    }
+  }
+
+  // Ordem das direções: espiral horária começando por baixo
+  const spiralOrder: Directions[] = [
+    'bottom',
+    'bottom-right',
+    'right',
+    'top-right',
+    'top',
+    'top-left',
+    'left',
+    'bottom-left'
+  ]
+
+  // Varredura em espiral
+  for (let level = 0; level < maxLevels; level++) {
+    for (const direction of spiralOrder) {
+      const pos = calculatePositionForDirection(direction, level)
+
+      if (!hasCollisionAt(pos.x, pos.y, direction, level)) {
+        console.log(`[V2] ✓ Posição livre: ${direction} (nível ${level}) em x=${pos.x.toFixed(0)}, y=${pos.y.toFixed(0)}`)
+        return pos
+      }
+    }
+  }
+
+  // Fallback
+  console.warn('[V2] No collision-free position found. Using fallback.')
+  return {
+    x: parentCenterX - childWidth / 2,
+    y: parent.y + parentHeight + gap
+  }
+}
+
+
+/**
+ * LEGACY: Calcula posição para child shape usando algoritmo de espiral simples.
+ * Não verifica colisões - apenas usa índice do filho.
+ * 
+ * @deprecated Use calculateChildPositionWithCollisionDetection para evitar sobreposições
  */
 export function calculateChildPosition(
   parent: { x: number; y: number; props: { w: number; measuredHeight?: number; h: number } },
@@ -197,6 +388,7 @@ export function createArrow(
 /**
  * Cria um shape filho e arrow automaticamente.
  * Operação atômica - rollback se falhar.
+ * Usa detecção de colisão para encontrar posição livre.
  */
 export function createChildShape(
   editor: Editor,
@@ -214,10 +406,16 @@ export function createChildShape(
   // Obter flowId do pai (ou criar novo se não existir)
   const parentFlowId = (parent.props as any).flowId || crypto.randomUUID()
 
-  // Calcular posição do filho
-  const childrenCount = getChildrenCount(editor, parentId)
+  // Calcular posição do filho com detecção de colisão
   const childWidth = childType === 'note' ? 300 : 400
-  const position = calculateChildPosition(parent as any, childrenCount, childWidth)
+  const childHeight = estimateChildHeight(childType)
+  const position = calculateChildPositionWithCollisionDetection(
+    editor,
+    parentId,
+    parent as any,
+    childWidth,
+    childHeight
+  )
 
   // Criar ID do filho
   const childId = createShapeId()

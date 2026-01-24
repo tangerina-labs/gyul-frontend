@@ -84,9 +84,16 @@ export class NoteBuilder implements INoteBuilder {
     // Injetar metadata de teste APÓS criação
     await this.injectTestMetadata();
 
-    // Write content if provided
+    // Buscar shape pelo creation ID ANTES de interagir
+    const shapeId = await getShapeIdByTestCreationId(this.page, this.creationId);
+    const testId = getTestIdFromType("note");
+
+    // Criar locator específico para este shape
+    const specificLocator = this.page.locator(`[data-testid="${testId}"][data-shape-id="${shapeId}"]`);
+
+    // Write content if provided - usando locator específico
     if (this.content) {
-      await writeNote(this.page, this.content);
+      await writeNote(this.page, this.content, specificLocator);
     }
 
     // Fit view if requested (and not already done by writeNote)
@@ -94,19 +101,10 @@ export class NoteBuilder implements INoteBuilder {
       await fitCanvasView(this.page);
     }
 
-    // Buscar shape pelo creation ID
-    const shapeId = await getShapeIdByTestCreationId(this.page, this.creationId);
-    const testId = getTestIdFromType("note");
-
     // If this was a child, wait a bit more for arrow creation
     if (this.state.isChild) {
       await this.page.waitForTimeout(200);
     }
-
-    // Create a specific locator using the shapeId
-    // Filter by the data-shape-id attribute (we'll need to add this in the component)
-    // For now, use a more specific approach: filter by matching shape in DOM
-    const specificLocator = this.page.locator(`[data-testid="${testId}"][data-shape-id="${shapeId}"]`);
 
     // Return handle
     return new ShapeHandle({
