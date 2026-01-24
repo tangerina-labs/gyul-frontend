@@ -599,14 +599,26 @@ export async function expectQuestionState(
 /**
  * Writes content to a note and finalizes it with Enter.
  * Waits for the note to become readonly (note-content visible).
+ * 
+ * @param page - Playwright page
+ * @param content - Content to write
+ * @param context - Optional locator context (specific note card) to scope the search
  */
-export async function writeNote(page: Page, content: string): Promise<void> {
+export async function writeNote(
+  page: Page,
+  content: string,
+  context?: Locator
+): Promise<void> {
   await fitCanvasView(page);
-  const textarea = page.getByTestId("note-textarea").last();
+  
+  const ctx = context || page;
+  const textarea = ctx.getByTestId("note-textarea");
+  
   await textarea.fill(content);
   await page.keyboard.press("Enter");
-  await expect(page.getByTestId("note-content").last()).toBeVisible();
-  await fitCanvasView(page);
+ 
+  // Verificar visibilidade dentro do contexto específico
+  await expect(ctx.getByTestId("note-content")).toBeVisible({ timeout: 5000 });
 }
 
 /**

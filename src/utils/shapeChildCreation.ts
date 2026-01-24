@@ -52,23 +52,7 @@ export function estimateChildHeight(childType: ShapeType): number {
   return 200
 }
 
-// ============================================================================
-// FLAG PARA ALTERNAR ENTRE VERSÕES DO ALGORITMO
-// Mude para false para usar V1 (versão com bugs conhecidos)
-// ============================================================================
-const USE_V2_ALGORITHM = true
-
-/**
- * V2 - VERSÃO CORRIGIDA
- * 
- * Melhorias sobre V1:
- * - Calcula posição a partir da BORDA do pai, não do centro
- * - Aplica fator sqrt(2) nas diagonais para distância visual equivalente
- * - Valida colisão na posição FINAL (sem gaps pós-cálculo)
- * - Espiral horária com incremento de raio consistente
- * - Sem valores mágicos hardcoded
- */
-function calculateChildPositionWithCollisionDetectionV2(
+export function calculateChildPositionWithCollisionDetection(
   editor: Editor,
   parentId: TLShapeId,
   parent: { x: number; y: number; props: { w: number; measuredHeight?: number; h: number } },
@@ -208,29 +192,6 @@ function calculateChildPositionWithCollisionDetectionV2(
   }
 }
 
-/**
- * WRAPPER: Calcula posição para child shape com detecção de colisão.
- * 
- * Usa V2 (algoritmo corrigido) por padrão.
- * Altere USE_V2_ALGORITHM para false para usar V1 (debugging).
- */
-export function calculateChildPositionWithCollisionDetection(
-  editor: Editor,
-  parentId: TLShapeId,
-  parent: { x: number; y: number; props: { w: number; measuredHeight?: number; h: number } },
-  childWidth: number,
-  childHeight: number
-): { x: number; y: number } {
-
-  return calculateChildPositionWithCollisionDetectionV2(
-    editor,
-    parentId,
-    parent,
-    childWidth,
-    childHeight
-  )
-
-}
 
 /**
  * LEGACY: Calcula posição para child shape usando algoritmo de espiral simples.

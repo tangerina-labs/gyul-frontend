@@ -7,6 +7,7 @@ import {
   writeNote,
   getNoteCardCount,
   clickUndo,
+  ShapeBuilder,
 } from './helpers/test-utils'
 
 test.describe('Note Shape', () => {
@@ -252,12 +253,17 @@ test.describe('Note Shape', () => {
   test.describe('Multiplas Notas', () => {
     test('should support multiple notes on same canvas with distinct content', async ({ page }) => {
       // Create first note
-      await addShapeViaMenu(page, 'Note', { x: 200, y: 200 })
-      await writeNote(page, 'Nota 1')
+      await ShapeBuilder.note(page)
+        .atPosition(200, 200)
+        .write('Nota 1')
+        .build()
 
-      // Create second note
-      await addShapeViaMenu(page, 'Note', { x: 600, y: 200 })
-      await writeNote(page, 'Nota 2')
+
+      await ShapeBuilder.note(page)
+        .atPosition(600, 200)
+        .write('Nota 2')
+        .build()
+
 
       // Both notes should be visible
       const count = await getNoteCardCount(page)
